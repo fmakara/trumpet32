@@ -1,0 +1,6 @@
+build/
+.settings/
+.tracecompass/
+sdkconfig.*
+.project
+.cproject
