@@ -37,6 +37,12 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t)
 }
 }
 
+Lcd* Lcd::singleton = 0;
+Lcd* Lcd::get(){
+	if(singleton == 0)singleton = new Lcd(GPIO_NUM_5,GPIO_NUM_19,GPIO_NUM_23,GPIO_NUM_18,GPIO_NUM_21,GPIO_NUM_22);
+	return singleton;
+}
+
 Lcd::Lcd(gpio_num_t cs, gpio_num_t miso, gpio_num_t mosi,
 		gpio_num_t clk , gpio_num_t rst, gpio_num_t dc) : Sprite(mem,84,48,6) {
 	clear();

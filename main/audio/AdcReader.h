@@ -23,7 +23,7 @@ protected:
 	uint32_t ulp_addr;
 	static void task(void *arg);
 	static void timerCallback(void *arg);
-	static AdcReader* instance;
+	static AdcReader* singleton;
 };
 
 #endif /* MAIN_AUDIO_ADCREADER_H_ */

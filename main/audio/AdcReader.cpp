@@ -29,10 +29,10 @@ extern const uint8_t bin_end[]   asm("_binary_ulp_audio_bin_end");
 #define TIMER_INTERVAL_SEC    (1.0/10000) // sample test interval for the first timer
 #define TIMER_INDEX           TIMER_1
 
-AdcReader* AdcReader::instance = 0;
+AdcReader* AdcReader::singleton = 0;
 AdcReader* AdcReader::get(){
-	if (instance == 0)instance = new AdcReader();
-	return instance;
+	if (singleton == 0)singleton = new AdcReader();
+	return singleton;
 }
 AdcReader::AdcReader() {
     timer_queue = xQueueCreate(10, sizeof(int));

@@ -30,12 +30,11 @@ extern "C" {
 AdcReader *reader;
 Lcd *lcd;
 
-void app_main()
-{
-    lcd = new Lcd(GPIO_NUM_5,GPIO_NUM_19,GPIO_NUM_23,GPIO_NUM_18,GPIO_NUM_21,GPIO_NUM_22);
-    reader = AdcReader::get();
+void app_main(){
+	//Initialize peripherals
+    Lcd::get()->setup();
+    AdcReader::get();
 
-    lcd->setup();
     /*Sprite spr(spr1,84,48,6);
     spr.dot(0,0,1);
     spr.dot(1,0,1);
