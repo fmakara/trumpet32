@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+ConfigManager* ConfigManager::singleton = 0;
+ConfigManager* ConfigManager::get(){
+	if(singleton==0)singleton = new ConfigManager();
+	return singleton;
+}
+
 ConfigManager::ConfigManager() {
   int i, memNeeded;
   uint8_t *j;
@@ -26,7 +32,7 @@ ConfigManager::ConfigManager() {
     printf("ERROR in Config manager: %d -/-> %d configs",i,CONFIGMANAGER_MAX);
     //Reboot the esp32?
   }
-  buffer = malloc(memNeeded);
+  buffer = (uint8_t*)malloc(memNeeded);
   if(buffer == NULL){
     printf("ERROR in Config manager: Could not malloc %d bytes",memNeeded);
     //Reboot the esp32?
@@ -63,13 +69,13 @@ void ConfigManager::set(Config c, int32_t v){
     if(v>params[c].max)v = params[c].max;
     if(v<params[c].min)v = params[c].min;
     *((int32_t*)params[c].p) = v;
-    params[c].cb(v);
+    if(params[c].cb)params[c].cb(v);
   }else if(params[c].type==STRING){
     char buff[33];
     sprintf(buff,"%d",v);
     if(strlen(buff)<=params[c].max && strlen(buff)>=params[c].min){
-      strcpy((char*)params[c], buff);
-      params[c].cb(0);
+      strcpy((char*)params[c].p, buff);
+      if(params[c].cb)params[c].cb(0);
     }
   }
 }
@@ -81,11 +87,12 @@ void ConfigManager::set(Config c, const char *s){
     if(buff>params[c].max)buff = params[c].max;
     if(buff<params[c].min)buff = params[c].min;
     *((int32_t*)params[c].p) = buff;
-    params[c].cb(buff);
+    if(params[c].cb)params[c].cb(buff);
   }else if(params[c].type==STRING){
     if(strlen(s)>=params[c].min){
       strncpy((char*)params[c].p, s, params[c].max);
       params[c].p[params[c].max] = 0;
+      if(params[c].cb)params[c].cb(0);
     }
   }
 }
@@ -96,23 +103,23 @@ void ConfigManager::setCallback(Config c, void (*cb)(int32_t)){
 
 ConfigManager::Config ConfigManager::stringToIndex(const char *s){
   for(int i=0; i<CONFIGMANAGER_MAX ; i++){
-    if(!strcmp(s,params[i].name))return i;
+    if(!strcmp(s,params[i].name))return (Config)i;
   }
   return CONFIGMANAGER_MAX;
 }
 
-ConfigManager::Config ConfigManager::setFromString(const char *config, const char *from, char *set){
+ConfigManager::Config ConfigManager::setFromString(const char *config, const char *from, char *valset){
   Config i = stringToIndex(config);
   if(i==CONFIGMANAGER_MAX){
-    set[0] = 0;
+	valset[0] = 0;
     return CONFIGMANAGER_MAX;
   }
   set(i, from);
-  get(i, set);
+  get(i, valset);
   return i;
 }
 
-int ConfigManager::getFullJSON(const char *s, int maxlen){
+int ConfigManager::getFullJSON(char *s, int maxlen){
   //https://www.json.org/json-pt.html
   //Implementing only the first level of object, ASCII string and integer
   int i, len;
@@ -129,7 +136,7 @@ int ConfigManager::getFullJSON(const char *s, int maxlen){
     }else if(params[i].type==STRING){
       char buff[100];
       char2unicode((char*)params[i].p, buff, 100);
-      len = snprintf(p, maxlen, "\"%s\":\"%d\",",params[i].name,buff);
+      len = snprintf(p, maxlen, "\"%s\":\"%s\",",params[i].name,buff);
       if(len<0)return -(int)(p-s);
     }
     p += len;
@@ -143,13 +150,13 @@ int ConfigManager::getFullJSON(const char *s, int maxlen){
   return (int)(p-s);
 }
 
-int ConfigManager::setFromJSON(const char *s){
+int ConfigManager::setFromJSON(char *s){
   return 0;
 }
 
-int ConfigManager::char2unicode(const char *s, char *j, int max){
+int ConfigManager::char2unicode(char *s, char *j, int max){
   char *lj = j, *ls = s;
-  int unicode, size=1;
+  int size=1;
   max--;
   *lj='"';
   lj++;
@@ -184,7 +191,7 @@ int ConfigManager::char2unicode(const char *s, char *j, int max){
   return size;
 }
 
-int ConfigManager::unicode2char(const char *j, char *s, int max){
+int ConfigManager::unicode2char(char *j, char *s, int max){
   char *lj = j, *ls = s;
   int unicode, size=0;
   max--;

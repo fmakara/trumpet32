@@ -22,7 +22,7 @@ protected:
 	TaskHandle_t handle;
 	uint32_t ulp_addr;
 	static void task(void *arg);
-	static void timerCallback(void *arg);
+	static void IRAM_ATTR timerCallback(void *arg);
 	static AdcReader* singleton;
 };
 

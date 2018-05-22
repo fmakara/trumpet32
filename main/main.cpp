@@ -3,12 +3,27 @@
 #include "lcd/Lcd.h"
 #include "lcd/Charset.h"
 #include "lcd/Writer.h"
+#include "config/ConfigManager.h"
+#include "config/WifiHandler.h"
 #include "audio/AdcReader.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <math.h>
+
+#include "esp_log.h"
+
+#include <sys/unistd.h>
+#include <sys/stat.h>
+#include "esp_err.h"
+#include "esp_log.h"
+#include "esp_spiffs.h"
+
+#include "mongoose/WebService.h"
+
+#define MG_LISTEN_ADDR "80"
+
 
 //Somente pra não ferrar com o Eclipse
 #undef BIT
@@ -26,50 +41,86 @@ extern "C" {
 //Charset p6(chrset_p6);
 //char texto[] = "Lorem ipsum \x01 dolor sit amet, consectetur adipiscing elit. Sed facilisis accumsan tellus, a finibus felis semper a.";
 
-
-AdcReader *reader;
-Lcd *lcd;
+void anyPage(HTTPData* d){
+	printf("any\n");
+  static const char *reply_fmt =
+	  "HTTP/1.0 200 OK\r\n"
+	  "Connection: close\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Hello %s\n";
+	char addr[32];
+	mg_sock_addr_to_str(&d->nc->sa, addr, sizeof(addr),
+				  MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+	printf("HTTP request from %s: %.*s %.*s\n", addr, (int) d->hm->method.len,
+			d->hm->method.p, (int) d->hm->uri.len, d->hm->uri.p);
+	mg_printf(d->nc, reply_fmt, addr);
+	d->nc->flags |= MG_F_SEND_AND_CLOSE;
+}
+void specificPage(HTTPData* d){
+	printf("pecific\n");
+  static const char *reply_fmt =
+	  "HTTP/1.0 200 OK\r\n"
+	  "Connection: close\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Specific Page %s\n";
+	char addr[32];
+	mg_sock_addr_to_str(&d->nc->sa, addr, sizeof(addr),
+				  MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+	printf("HTTP request from %s: %.*s %.*s\n", addr, (int) d->hm->method.len,
+			d->hm->method.p, (int) d->hm->uri.len, d->hm->uri.p);
+	mg_printf(d->nc, reply_fmt, addr);
+	d->nc->flags |= MG_F_SEND_AND_CLOSE;
+}
 
 void app_main(){
-	//Initialize peripherals
-    Lcd::get()->setup();
-    AdcReader::get();
+	//Initialize basic peripherals
+	Lcd *lcd = Lcd::get();
+    lcd->setup();
+    CM::get();
+    CM::get()->set(CM::WIFI_DEVICENAME,"Makara");
+    CM::get()->set(CM::WIFI_AP_SSID,"Felipe Owns");
+    CM::get()->set(CM::WIFI_AP_PASSWD,"12345678");
+    CM::get()->set(CM::WIFI_AP_CHANNEL,7);
+    CM::get()->set(CM::WIFI_MODE,3);
+    WifiHandler::get();
+    WifiHandler::get()->updateAP();
+	//AdcReader::get();
 
-    /*Sprite spr(spr1,84,48,6);
-    spr.dot(0,0,1);
-    spr.dot(1,0,1);
-    spr.dot(0,1,1);
-    spr.dot(83,47,1);
-    spr.dot(83,46,1);
-    spr.dot(82,47,1);*/
-/*
-    int x=-10;
+    esp_vfs_spiffs_conf_t conf = {
+		.base_path = "/spiffs",
+		.partition_label = "storage",
+		.max_files = 5,
+		.format_if_mount_failed = true
+	};
+    esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
-    Sprite regiao(&lcd,10,10,64,28);
-    Writer w(&p6,&regiao,texto);
+	if (ret != ESP_OK) {
+		if (ret == ESP_FAIL) {
+			printf("Failed to mount or format filesystem\n\n");
+		} else if (ret == ESP_ERR_NOT_FOUND) {
+			printf("Failed to find SPIFFS partition\n\n");
+		} else {
+			printf("Failed to initialize SPIFFS (%s)\n\n", esp_err_to_name(ret));
+		}
+		return;
+	}
 
-    w.no_overflow_x = 1;
-    while(1){
-    	w.scroll_y = x;
-    	w.render();
-        lcd.refresh();
-        x++;
-        vTaskDelay(100 / portTICK_RATE_MS);
-        if(x>=50)x=-10;
-    }
-*/
-    /*
-    float a = 0;
-    while(1){
-    	float c = cos(a)*60;
-    	float s = sin(a)*60;
-        lcd.clear();
-        lcd.line((int)(42+c),(int)(24+s),(int)(42-c),(int)(24-s));
-        a+=M_PI/50;
+	size_t total = 0, used = 0;
+	ret = esp_spiffs_info("storage", &total, &used);
+	if (ret != ESP_OK) {
+		printf( "Failed to get SPIFFS partition information (%s)\n\n", esp_err_to_name(ret));
+	} else {
+		printf( "Partition size: total: %d, used: %d\n\n", total, used);
+	}
 
-        lcd.refresh();
-        vTaskDelay(100 / portTICK_RATE_MS);
-    }*/
+	WebService *ws = new WebService("80");
+	ws->addCgi("/teste", specificPage);
+	ws->addCgi("/pasta*", specificPage);
+	ws->addSpiffs("/*", "/spiffs/*");
+	ws->addCgi("*", anyPage);
+
     int r = 0;
     while(1){
         lcd->clear();

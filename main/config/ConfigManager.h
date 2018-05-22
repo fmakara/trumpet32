@@ -14,6 +14,8 @@
 
 class ConfigManager {
 public:
+  static ConfigManager* get();
+
   enum Config {
 		//Integer configs
     SPLAYER_NOTE = 0,
@@ -39,6 +41,7 @@ public:
     LCD_CONSTRAST,
     LEDS_INTENSITY,
     WIFI_MODE,
+    WIFI_AP_CHANNEL,
     //String configs
     WIFI_DEVICENAME,
     WIFI_AP_SSID,
@@ -49,8 +52,6 @@ public:
     CONFIGMANAGER_MAX
 	};
 
-	ConfigManager();
-
   int32_t get(Config c);
   void get(Config c, char *s);
 
@@ -60,15 +61,17 @@ public:
   void setCallback(Config c, void (*cb)(int32_t));
 
   Config stringToIndex(const char *s);
-  Config setFromString(const char *config, const char *from, char *set);
+  Config setFromString(const char *config, const char *from, char *valset);
 
-  int getFullJSON(const char *s, int maxlen);
-  int setFromJSON(const char *s);
+  int getFullJSON(char *s, int maxlen);
+  int setFromJSON(char *s);
 
-  static int char2unicode(const char *s, char *j, int max);
-  static int unicode2char(const char *j, char *s, int max);
+  static int char2unicode(char *s, char *j, int max);
+  static int unicode2char(char *j, char *s, int max);
 protected:
   uint8_t *buffer;
+  ConfigManager();
+  static ConfigManager *singleton;
 
   enum ConfigType {
     INTEGER, STRING, BAD
@@ -81,7 +84,7 @@ protected:
     void (*cb)(int32_t);
     uint8_t *p;
   };
-  const static ConfigParameters params[CONFIGMANAGER_MAX] = {
+  ConfigParameters params[CONFIGMANAGER_MAX+1] = {
     {INTEGER,    0,     72, "SPLAYER_NOTE"                   , NULL, NULL},
     {INTEGER,    0,    255, "SPLAYER_VOLUME"                 , NULL, NULL},
     {INTEGER,    0,  10000, "SPLAYER_BEEP1_FREQ"             , NULL, NULL},
@@ -105,6 +108,7 @@ protected:
     {INTEGER,    0,    100, "LCD_CONSTRAST"                  , NULL, NULL},
     {INTEGER,    0,    100, "LEDS_INTENSITY"                 , NULL, NULL},
     {INTEGER,    0,      3, "WIFI_MODE"                      , NULL, NULL},
+    {INTEGER,    1,     13, "WIFI_AP_CHANNEL"                , NULL, NULL},
 
     {STRING,     3,     32, "WIFI_DEVICENAME"                , NULL, NULL},
     {STRING,     3,     32, "WIFI_AP_SSID"                   , NULL, NULL},
@@ -115,5 +119,7 @@ protected:
     {BAD,        0,      0, ""                               , NULL, NULL},
   };
 };
+
+typedef ConfigManager CM;
 
 #endif /* MAIN_CONFIGS_CONFIGMANAGER_H_ */

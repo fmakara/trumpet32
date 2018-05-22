@@ -12,6 +12,7 @@
 #include "sdkconfig.h"
 #include "driver/spi_master.h"
 #include <string.h>
+#include <stdio.h>
 
 #define LCD_FUNCTION         (1<<5)
 #define LCD_FUNCTION_PDOWN   (1<<2)
@@ -110,9 +111,9 @@ void Lcd::setup(){
     gpio_set_level(dc_pin, 0);
     gpio_set_level(rst_pin, 0);
     gpio_set_level(cs_pin, 1);
-    vTaskDelay(100 / portTICK_RATE_MS);
+    vTaskDelay(10);
     gpio_set_level(rst_pin, 1);
-    vTaskDelay(100 / portTICK_RATE_MS);
+    vTaskDelay(10);
     gpio_set_level(cs_pin, 0);
     //LCD init
     spi_send(0,0);

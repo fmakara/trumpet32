@@ -1,0 +1,36 @@
+menu "SPIffs Example Configuration"
+
+config SPIFFS_BASE_ADDR
+    hex "SPIFFS Base address"
+    range 0x100000 0x1FFE000
+    default 0x100000
+    help
+	Starting address of the SPIFFS area in ESP32 Flash
+	Write the address in hex format, 0x180000
+
+config SPIFFS_SIZE
+    hex "SPIFFS Size in bytes"
+    range 0x100 0x10000000
+    default 0x90000
+
+config SPIFFS_LOG_BLOCK_SIZE
+    int "SPIFFS Logical block size"
+    range 2048 65536
+    default 8192
+
+config SPIFFS_LOG_PAGE_SIZE
+    int "SPIFFS Logical page size"
+    range 256 2048
+    default 256
+    help
+	Set it to the phisycal page size og the used SPI Flash chip.
+
+
+config SPIFFS_OBJ_META_LEN
+    int "SPIFFS obj meta"
+    range 0 8
+    default 4
+    help
+	Set it to the phisycal page size og the used SPI Flash chip.
+
+endmenu
