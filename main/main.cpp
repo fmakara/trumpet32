@@ -42,7 +42,6 @@ extern "C" {
 //char texto[] = "Lorem ipsum \x01 dolor sit amet, consectetur adipiscing elit. Sed facilisis accumsan tellus, a finibus felis semper a.";
 
 void anyPage(HTTPData* d){
-	printf("any\n");
   static const char *reply_fmt =
 	  "HTTP/1.0 200 OK\r\n"
 	  "Connection: close\r\n"
@@ -50,15 +49,10 @@ void anyPage(HTTPData* d){
 	  "\r\n"
 	  "Hello %s\n";
 	char addr[32];
-	mg_sock_addr_to_str(&d->nc->sa, addr, sizeof(addr),
-				  MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-	printf("HTTP request from %s: %.*s %.*s\n", addr, (int) d->hm->method.len,
-			d->hm->method.p, (int) d->hm->uri.len, d->hm->uri.p);
-	mg_printf(d->nc, reply_fmt, addr);
-	d->nc->flags |= MG_F_SEND_AND_CLOSE;
+	d->getSourceIpPort(addr,32);
+	d->printf(reply_fmt, addr);
 }
 void specificPage(HTTPData* d){
-	printf("pecific\n");
   static const char *reply_fmt =
 	  "HTTP/1.0 200 OK\r\n"
 	  "Connection: close\r\n"
@@ -66,12 +60,8 @@ void specificPage(HTTPData* d){
 	  "\r\n"
 	  "Specific Page %s\n";
 	char addr[32];
-	mg_sock_addr_to_str(&d->nc->sa, addr, sizeof(addr),
-				  MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-	printf("HTTP request from %s: %.*s %.*s\n", addr, (int) d->hm->method.len,
-			d->hm->method.p, (int) d->hm->uri.len, d->hm->uri.p);
-	mg_printf(d->nc, reply_fmt, addr);
-	d->nc->flags |= MG_F_SEND_AND_CLOSE;
+	d->getSourceIpPort(addr,32);
+	d->printf(reply_fmt, addr);
 }
 
 void app_main(){
@@ -119,7 +109,6 @@ void app_main(){
 	ws->addCgi("/teste", specificPage);
 	ws->addCgi("/pasta*", specificPage);
 	ws->addSpiffs("/*", "/spiffs/*");
-	ws->addCgi("*", anyPage);
 
     int r = 0;
     while(1){

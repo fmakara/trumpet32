@@ -49,8 +49,6 @@ void WebService::addCgi(const char *page, void (*cb)(HTTPData*), const char *typ
 	next->cb = cb;
 	next->next = NULL;
 	*last = next;
-	printf("%p %p\n",last, &list);
-	printf("%s loaded\n",next->page);
 }
 
 void WebService::addSpiffs(const char *page, const char *path){
@@ -65,7 +63,6 @@ void WebService::addSpiffs(const char *page, const char *path){
 	next->cb = NULL;
 	next->next = NULL;
 	*last = next;
-	printf("%s loaded\n",page);
 }
 
 int WebService::w_strcmp(const char *wild, const char *s2, int size){
@@ -128,6 +125,7 @@ void WebService::mg_ev_handler(struct mg_connection *nc, int ev, void *p) {
 					if(p->internalPath[0]==0 || !w_strcmp(p->internalPath,hm->method.p,(int)hm->method.len)){
 						p->cb(new HTTPData(hm,nc));
 						pending = false;
+						nc->flags |= MG_F_SEND_AND_CLOSE;
 					}
 					break;
 				case TYPE_SPIFFS:
@@ -140,7 +138,8 @@ void WebService::mg_ev_handler(struct mg_connection *nc, int ev, void *p) {
 					    	nc->flags |= MG_F_SEND_AND_CLOSE;
 					    }else{
 							FILE *f = fopen(replacement, "rb");
-					    	mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %lu\r\n\r\n",sta.st_size);
+					    	mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Type: %s\r\nContent-Length: %lu\r\n\r\n",
+					    			HTTPData::ext2contentType(replacement),sta.st_size);
 					    	ws->sendingData.insert(std::pair<sock_t,FILE*>(nc->sock,f));
 					    }
 						pending = false;
@@ -150,13 +149,13 @@ void WebService::mg_ev_handler(struct mg_connection *nc, int ev, void *p) {
 			}
 		}
 	}else if(ev==MG_EV_SEND){
-		char mem[1000];
+		char mem[4000];
 		int read;
 		FILE *f = ws->sendingData[nc->sock];
 		if(f!=NULL){
-			read = fread(mem,1,1000,f);
+			read = fread(mem,1,4000,f);
 			mg_send(nc,mem,read);
-			if(read<1000){
+			if(read<4000){
 				fclose(f);
 				ws->sendingData.erase(nc->sock);
 				nc->flags |= MG_F_SEND_AND_CLOSE;
@@ -169,3 +168,4 @@ void WebService::mg_ev_handler(struct mg_connection *nc, int ev, void *p) {
 		}
 	}
 }
+
