@@ -121,7 +121,6 @@ void WebService::mg_ev_handler(struct mg_connection *nc, int ev, void *p) {
 			if(!w_strcmp(p->page,hm->uri.p,(int)hm->uri.len)){
 				switch(p->type){
 				case TYPE_CGI:
-					printf("CGI %s",p->page);
 					if(p->internalPath[0]==0 || !w_strcmp(p->internalPath,hm->method.p,(int)hm->method.len)){
 						p->cb(new HTTPData(hm,nc));
 						pending = false;

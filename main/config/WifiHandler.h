@@ -17,9 +17,17 @@ class WifiHandler {
 public:
 	static WifiHandler* get();
 	void updateAP();
-
+	void updateSTA();
+	wifi_ap_record_t *front_buffer;
+	void getWifiScan(wifi_ap_record_t **records, int *count);
+	void freeWifiScan();
 protected:
 	WifiHandler();
+	static void task(void *arg);
+	wifi_ap_record_t *records;
+	int records_count;
+	int records_manual_semaphore;
+	TaskHandle_t handle;
 	EventGroupHandle_t wifi_event_group;
 	static WifiHandler* singleton;
 	static esp_err_t event_handler(void *ctx, system_event_t *event);

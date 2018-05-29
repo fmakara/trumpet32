@@ -6,11 +6,13 @@
 #include "config/ConfigManager.h"
 #include "config/WifiHandler.h"
 #include "audio/AdcReader.h"
+#include "config/Webpages.h"
 #include "esp_system.h"
 #include "esp_spi_flash.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <math.h>
+#include "nvs_flash.h"
 
 #include "esp_log.h"
 
@@ -41,42 +43,31 @@ extern "C" {
 //Charset p6(chrset_p6);
 //char texto[] = "Lorem ipsum \x01 dolor sit amet, consectetur adipiscing elit. Sed facilisis accumsan tellus, a finibus felis semper a.";
 
-void anyPage(HTTPData* d){
-  static const char *reply_fmt =
-	  "HTTP/1.0 200 OK\r\n"
-	  "Connection: close\r\n"
-	  "Content-Type: text/plain\r\n"
-	  "\r\n"
-	  "Hello %s\n";
-	char addr[32];
-	d->getSourceIpPort(addr,32);
-	d->printf(reply_fmt, addr);
-}
-void specificPage(HTTPData* d){
-  static const char *reply_fmt =
-	  "HTTP/1.0 200 OK\r\n"
-	  "Connection: close\r\n"
-	  "Content-Type: text/plain\r\n"
-	  "\r\n"
-	  "Specific Page %s\n";
-	char addr[32];
-	d->getSourceIpPort(addr,32);
-	d->printf(reply_fmt, addr);
+
+void callback_updateAP(int32_t ip){
+	WifiHandler::get()->updateAP();
 }
 
+void callback_updateSTA(int32_t ip){
+	WifiHandler::get()->updateSTA();
+}
+
+int64_t INTERNAL_PLEASE_RESTART = INT64_MAX;
+
 void app_main(){
+	nvs_flash_init();
+    CM::get()->loadFromNVM();
 	//Initialize basic peripherals
 	Lcd *lcd = Lcd::get();
     lcd->setup();
-    CM::get();
-    CM::get()->set(CM::WIFI_DEVICENAME,"Makara");
-    CM::get()->set(CM::WIFI_AP_SSID,"Felipe Owns");
-    CM::get()->set(CM::WIFI_AP_PASSWD,"12345678");
-    CM::get()->set(CM::WIFI_AP_CHANNEL,7);
-    CM::get()->set(CM::WIFI_MODE,3);
+
     WifiHandler::get();
     WifiHandler::get()->updateAP();
+    WifiHandler::get()->updateSTA();
 	//AdcReader::get();
+
+    CM::get()->setCallback(CM::WIFI_AP_SSID,callback_updateAP);
+    CM::get()->setCallback(CM::WIFI_STA_SSID,callback_updateSTA);
 
     esp_vfs_spiffs_conf_t conf = {
 		.base_path = "/spiffs",
@@ -106,8 +97,8 @@ void app_main(){
 	}
 
 	WebService *ws = new WebService("80");
-	ws->addCgi("/teste", specificPage);
-	ws->addCgi("/pasta*", specificPage);
+	init_cgi(ws);
+
 	ws->addSpiffs("/*", "/spiffs/*");
 
     int r = 0;
@@ -126,14 +117,11 @@ void app_main(){
         lcd->invert(10,10,30,30);
         lcd->refresh();
         vTaskDelay(100);
+        if(INTERNAL_PLEASE_RESTART < esp_timer_get_time()){
+        	CM::get()->saveToNVM();
+            printf("Restarting now.\n");
+            esp_restart();
+        }
     }
-
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000);
-    }
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
 }
 

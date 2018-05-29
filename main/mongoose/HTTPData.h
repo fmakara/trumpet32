@@ -24,6 +24,7 @@ public:
 	void getSourceIpPort(char *ip, int maxsize=32000);
 	void setResponseCode(int code);
 	int getGET(const char *name, char *value, int maxsize=32000);
+	int getGET(int index, char *name, char *value, int maxsize=32000);
 	int getPOST(const char *name, char *value, int maxsize=32000);
 
 	static const char* code2msg(int code);

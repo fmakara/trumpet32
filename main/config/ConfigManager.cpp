@@ -10,11 +10,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+#include "nvs_flash.h"
+#include "nvs.h"
+#include "lwip/ip4_addr.h"
+
+
 ConfigManager* ConfigManager::singleton = 0;
 ConfigManager* ConfigManager::get(){
 	if(singleton==0)singleton = new ConfigManager();
 	return singleton;
 }
+
+int32_t ConfigManager::min(Config c){return params[c].min;}
+int32_t ConfigManager::max(Config c){return params[c].max;}
+ConfigManager::ConfigType ConfigManager::type(Config c){return params[c].type;}
 
 ConfigManager::ConfigManager() {
   int i, memNeeded;
@@ -24,6 +34,8 @@ ConfigManager::ConfigManager() {
       memNeeded += sizeof(int32_t);
     }else if(params[i].type==STRING){
       memNeeded += params[i].max+1;
+    }else if(params[i].type==IP){
+      memNeeded += sizeof(uint32_t);
     }else{ //BAD
       break;
     }
@@ -45,6 +57,8 @@ ConfigManager::ConfigManager() {
       j+=sizeof(int32_t);
     }else if(params[i].type==STRING){
       j+=params[i].max+1;
+    }else if(params[i].type==IP){
+	  j+=sizeof(uint32_t);
     }
   }
 }
@@ -52,6 +66,7 @@ ConfigManager::ConfigManager() {
 int32_t ConfigManager::get(Config c){
   if(params[c].type==INTEGER)return *((int32_t*)params[c].p);
   if(params[c].type==STRING)return atoi((char*)params[c].p);
+  if(params[c].type==IP)return *((int32_t*)params[c].p);
   return 0;
 }
 
@@ -61,10 +76,18 @@ void ConfigManager::get(Config c, char *s){
     sprintf(s,"%d",*((int32_t*)params[c].p));
   }else if(params[c].type==STRING){
     strcpy(s, (char*)params[c].p);
+    if(c==WIFI_STA_SSID){
+    	for(int i=0;s[i];i++)printf(".%02X",s[i]);
+    	printf("\n");
+    }
+  }else if(params[c].type==IP){
+	uint8_t *ip = (uint8_t*)params[c].p;
+	sprintf(s,"%u.%u.%u.%u",ip[0],ip[1],ip[2],ip[3]);
   }
 }
 
-void ConfigManager::set(Config c, int32_t v){
+void ConfigManager::set(Config c, int32_t v, bool fromweb){
+  if(fromweb && !params[c].webWriteable)return;
   if(params[c].type==INTEGER){
     if(v>params[c].max)v = params[c].max;
     if(v<params[c].min)v = params[c].min;
@@ -77,10 +100,14 @@ void ConfigManager::set(Config c, int32_t v){
       strcpy((char*)params[c].p, buff);
       if(params[c].cb)params[c].cb(0);
     }
+  }else if(params[c].type==IP){
+	*((uint32_t*)params[c].p) = v;
+	if(params[c].cb)params[c].cb(v);
   }
 }
 
-void ConfigManager::set(Config c, const char *s){
+void ConfigManager::set(Config c, const char *s, bool fromweb){
+  if(fromweb && !params[c].webWriteable)return;
   if(s==NULL)return;
   if(params[c].type==INTEGER){
     int32_t buff = atoi(s);
@@ -92,8 +119,18 @@ void ConfigManager::set(Config c, const char *s){
     if(strlen(s)>=params[c].min){
       strncpy((char*)params[c].p, s, params[c].max);
       params[c].p[params[c].max] = 0;
+      if(c==WIFI_STA_SSID){
+          	for(int i=0;s[i];i++)printf(" %02X",s[i]);
+          	printf("\n");
+          }
       if(params[c].cb)params[c].cb(0);
     }
+  }else if(params[c].type==IP){
+	ip4_addr_t ip;
+	if(ip4addr_aton(s, &ip)){
+		*((uint32_t*)params[c].p) = (uint32_t)ip.addr;
+		if(params[c].cb)params[c].cb((uint32_t)ip.addr);
+	}
   }
 }
 
@@ -102,19 +139,27 @@ void ConfigManager::setCallback(Config c, void (*cb)(int32_t)){
 }
 
 ConfigManager::Config ConfigManager::stringToIndex(const char *s){
-  for(int i=0; i<CONFIGMANAGER_MAX ; i++){
-    if(!strcmp(s,params[i].name))return (Config)i;
+  int i;
+  char local[33];
+  for(i=0 ; s[i] && i<32 ; i++){
+	if(s[i]>='a' && s[i]<='z')local[i]=s[i]-'a'+'A';
+	else local[i]=s[i];
+  }
+  if(i>=32)return CONFIGMANAGER_MAX;
+  local[i]=0;
+  for(i=0; i<CONFIGMANAGER_MAX ; i++){
+    if(!strcmp(local,params[i].name))return (Config)i;
   }
   return CONFIGMANAGER_MAX;
 }
 
-ConfigManager::Config ConfigManager::setFromString(const char *config, const char *from, char *valset){
+ConfigManager::Config ConfigManager::setFromString(const char *config, const char *from, char *valset, bool fromweb){
   Config i = stringToIndex(config);
   if(i==CONFIGMANAGER_MAX){
 	valset[0] = 0;
     return CONFIGMANAGER_MAX;
   }
-  set(i, from);
+  if(from!=NULL)set(i, from, fromweb);
   get(i, valset);
   return i;
 }
@@ -136,8 +181,13 @@ int ConfigManager::getFullJSON(char *s, int maxlen){
     }else if(params[i].type==STRING){
       char buff[100];
       char2unicode((char*)params[i].p, buff, 100);
-      len = snprintf(p, maxlen, "\"%s\":\"%s\",",params[i].name,buff);
+      len = snprintf(p, maxlen, "\"%s\":%s,",params[i].name,buff);
       if(len<0)return -(int)(p-s);
+    }else if(params[i].type==IP){
+      uint8_t *ip = (uint8_t*)params[i].p;
+	  len = snprintf(p, maxlen, "\"%s\":\"%u.%u.%u.%u\",",params[i].name,
+			  ip[0],ip[1],ip[2],ip[3]);
+	  if(len<0)return -(int)(p-s);
     }
     p += len;
     maxlen -= len;
@@ -181,13 +231,23 @@ int ConfigManager::char2unicode(char *s, char *j, int max){
       lj++;
       size++;
 	}else{
-      sprintf(lj,"\\u%4X",*ls);
+	  if(*(ls+1)>=' ' && *(ls+1)<='~'){
+	      sprintf(lj,"\\u%04X",*(ls));
+	      printf("%04X ",*(ls));
+	      ls++;
+	  }else{
+	      sprintf(lj,"\\u%02X%02X",*(ls),*(ls+1));
+	      printf("%02X %02X %c %c ",*(ls),*(ls+1),*(ls),*(ls+1));
+	      ls+=2;
+	  }
       lj+=6;
       size+=6;
 	}
     ls++;
   }
-  *lj='"';
+  lj[0]='"';
+  lj[1]=0;
+  size+=2;
   return size;
 }
 
@@ -213,9 +273,17 @@ int ConfigManager::unicode2char(char *j, char *s, int max){
         case 'u':
           unicode = ((lj[1]-'0')<<12)|((lj[2]-'0')<<8)|
             ((lj[3]-'0')<<4)|(lj[4]-'0');
-          *ls = unicode & 0xFF;
-          size++;
-          ls++;
+	      printf("%04X ",unicode);
+          if(unicode>0xFF){
+        	  *(ls+1) = (unicode>>8) & 0xFF;
+              *(ls) = unicode & 0xFF;
+              ls+=2;
+              size+=2;
+          }else{
+              *(ls) = unicode & 0xFF;
+              ls++;
+              size++;
+          }
           lj+=4;
           break;
       }
@@ -229,4 +297,60 @@ int ConfigManager::unicode2char(char *j, char *s, int max){
   }
   *ls = 0;
   return size;
+}
+
+esp_err_t ConfigManager::saveToNVM(){
+	int i;
+	esp_err_t err;
+	nvs_handle handle;
+	err = nvs_open("TRUMPET", NVS_READWRITE, &handle);
+	if(err!=ESP_OK)return err;
+	for(i=0;i<CONFIGMANAGER_MAX;i++){
+		if(params[i].nvmWriteable){
+			if(params[i].type==INTEGER){
+				err = nvs_set_i32(handle, params[i].name, *((int32_t*)params[i].p));
+			}else if(params[i].type==STRING){
+				err = nvs_set_str(handle, params[i].name, (char*)params[i].p);
+			}else if(params[i].type==IP){
+				err = nvs_set_u32(handle, params[i].name, *((uint32_t*)params[i].p));
+			}
+			if(err!=ESP_OK){
+				nvs_close(handle);
+				return err;
+			}
+		}
+	}
+	err = nvs_commit(handle);
+	nvs_close(handle);
+	return err;
+}
+
+esp_err_t ConfigManager::loadFromNVM(){
+	int i;
+	esp_err_t err;
+	nvs_handle handle;
+	err = nvs_open("TRUMPET", NVS_READONLY, &handle);
+	if(err==ESP_ERR_NVS_NOT_FOUND){
+		err = nvs_open("TRUMPET", NVS_READWRITE, &handle);
+	}
+	if(err!=ESP_OK)return err;
+	for(i=0;i<CONFIGMANAGER_MAX;i++){
+		if(params[i].nvmWriteable){
+			if(params[i].type==INTEGER){
+				err = nvs_get_i32(handle, params[i].name, ((int32_t*)params[i].p));
+			}else if(params[i].type==STRING){
+				size_t max = params[i].max;
+				err = nvs_get_str(handle, params[i].name, (char*)params[i].p, &max);
+			}else if(params[i].type==IP){
+				err = nvs_get_u32(handle, params[i].name, ((uint32_t*)params[i].p));
+			}
+			if(!(err==ESP_OK||err==ESP_ERR_NVS_NOT_FOUND)){
+				nvs_close(handle);
+				return err;
+			}
+		}
+	}
+	err = nvs_commit(handle);
+	nvs_close(handle);
+	return err;
 }

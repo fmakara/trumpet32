@@ -7,6 +7,7 @@
 
 #include "HTTPData.h"
 #include <stdio.h>
+#include <stdarg.h>
 
 HTTPData::HTTPData(struct http_message *_hm, struct mg_connection *_nc):
 		hm(_hm),nc(_nc) {
@@ -80,8 +81,8 @@ int HTTPData::getGET(const char *name, char *value, int maxsize){
 			}
 		}
 		if(name[j]==0 && i+j>=hm->query_string.len){
-			found = i+j;
-			break;
+			//found = i+j;
+			return -1;
 		}else if(name[j]==0 && hm->query_string.p[i+j]=='='){
 			found = i+j+1;
 			break;
@@ -89,8 +90,38 @@ int HTTPData::getGET(const char *name, char *value, int maxsize){
 		while(i<hm->query_string.len && hm->query_string.p[i]!='&')i++;
 	}
 	if(found==-1)return 0;
-	for(j=0;j<hm->query_string.len && hm->query_string.p[j+found]!='&';j++);
-	mg_url_decode(hm->query_string.p+found, j, value, maxsize, 1);
+	if(value!=NULL){
+		for(j=0;j<hm->query_string.len && hm->query_string.p[j+found]!='&';j++);
+		mg_url_decode(hm->query_string.p+found, j, value, maxsize, 1);
+	}
+	return 1;
+}
+
+int HTTPData::getGET(int index, char *name, char *value, int maxsize){
+	int i, j;
+
+	for(i=0;i<hm->query_string.len && index>0;i++){
+		if(hm->query_string.p[i]=='&')index--;
+	}
+	if(index>0 || i>=hm->query_string.len)return 0;
+	for(j=0;i+j<hm->query_string.len;j++){
+		if(hm->query_string.p[i+j]=='='||hm->query_string.p[i+j]=='&'){
+			break;
+		}
+		name[j]=hm->query_string.p[i+j];
+	}
+	name[j]=0;
+	if(hm->query_string.p[i+j]=='&' || i+j>=hm->query_string.len){
+		value[0]=0;
+		return -1;
+	}
+	i += j+1;
+	for(j=0;i+j<hm->query_string.len;j++){
+		if(hm->query_string.p[i+j]=='&'){
+			break;
+		}
+	}
+	mg_url_decode(hm->query_string.p+i, j, value, maxsize, 1);
 	return 1;
 }
 
