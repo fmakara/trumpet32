@@ -16,6 +16,7 @@ void stations_cgi(HTTPData *d);
 void config_cgi(HTTPData *d);
 void save_cgi(HTTPData *d);
 void reboot_cgi(HTTPData *d);
+void screen_cgi(HTTPData *d);
 
 
 #endif /* MAIN_CONFIG_WEBPAGES_H_ */

@@ -1,0 +1,98 @@
+<html>
+<head>
+<script>
+var correspondence = [
+  [105,  102,  103,  100,  104,  98],
+  [1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7]
+];
+var pixels=[];
+var keys = 0;
+
+function keyDown(event){
+	var pos = correspondence[0].indexOf(event.keyCode);
+	if(pos>=0){
+		keys |= correspondence[1][pos];
+		keys |= 1;
+	}
+}
+function keyUp(event){
+	var pos = correspondence[0].indexOf(event.keyCode);
+	if(pos>=0){
+		keys &= ~correspondence[1][pos];
+		if( keys==1 )keys = 0;
+	}
+}
+function request(){
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if(this.readyState==4){
+			setTimeout(request,100);
+		}
+		if (this.readyState == 4 && this.status == 200) {
+			recv = JSON.parse(this.responseText);
+			scr = recv["screen"];
+			for(var byte=0;byte<48*84/8;byte++){
+				for(var bit=0;bit<8;bit++){
+					if(scr[byte] & (1<<bit)){
+						pixels[byte*8+bit].className="black";
+					}else{
+						pixels[byte*8+bit].className="white";
+					}
+				}
+			}
+		}
+	};
+	xhttp.open("GET", "/cgi/screen.cgi?keys="+keys, true);
+	xhttp.send();
+}
+
+function generateGrid(){
+	t = document.getElementById("screen");
+	var str = "<table>";
+	for(var h=0; h<48; h++){
+		str += "<tr>";
+		for(var w=0;w<84;w++){
+			str+="<td id='screen_"+(h+48*w)+"'>.</td>";
+		}
+		str += "</tr>";
+	}
+	str += "</table>";
+	t.innerHTML = str;
+
+	for(var b=0; b<48*84; b++){
+		pixels[b] = document.getElementById("screen_"+b);
+	}
+
+	setTimeout(request,100);
+}
+
+</script>
+<style>
+
+#screen td {
+	width: 10px;
+	height: 10px;
+	margin: 0px;
+	border: 0px;
+	padding: 0px;
+}
+#screen tr {
+	margin: 0px;
+	border: 0px;
+	padding: 0px;
+}
+
+.black {
+	background-color: black;
+}
+
+.white {
+	background-color: white;
+}
+</style>
+</head>
+<body onkeydown="keyDown(event)" onkeyup="keyUp(event)" onload="generateGrid()">
+<div id="screen">
+</table>
+</body>
+</html>

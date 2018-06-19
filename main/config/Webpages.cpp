@@ -11,12 +11,14 @@
 #include "ConfigManager.h"
 #include "WifiHandler.h"
 #include "esp_err.h"
+#include "../lcd/Lcd.h"
 
 void init_cgi(WebService *ws){
 	ws->addCgi("/cgi/config.cgi", config_cgi);
 	ws->addCgi("/cgi/stations.cgi", stations_cgi);
 	ws->addCgi("/cgi/save.cgi", save_cgi);
 	ws->addCgi("/cgi/reboot.cgi", reboot_cgi);
+	ws->addCgi("/cgi/screen.cgi", screen_cgi);
 }
 
 static const char *reply_fmt =
@@ -117,8 +119,23 @@ void save_cgi(HTTPData *d){
 void reboot_cgi(HTTPData *d){
 	char jsonbuff[100];
 	int len=0;
-	extern int64_t INTERNAL_PLEASE_RESTART;
+	extern int64_t GLOBAL_PLEASE_RESTART;
 	len+=sprintf(jsonbuff+len,"{\"ok\":true}");
 	d->printf(reply_fmt,len,jsonbuff);
-	INTERNAL_PLEASE_RESTART = esp_timer_get_time()+1000*1000;
+	GLOBAL_PLEASE_RESTART = esp_timer_get_time()+1000*1000;
+}
+
+void screen_cgi(HTTPData *d){
+	char jsonbuff[30+10*84*48/8];
+	char inputBuff[16];
+	int len=0;
+	Lcd *lcd = Lcd::get();
+	if(d->getGET("keys",inputBuff,15)>0){
+		lcd->buttonOverride = atoi(inputBuff);
+	}
+	len+=sprintf(jsonbuff+len,"{\"screen\":[");
+	for(int i=0;i<lcd->step()*lcd->width();i++)len+=sprintf(jsonbuff+len,"%d,",lcd->memory()[i]);
+	len--;
+	len+=sprintf(jsonbuff+len,"]}");
+	d->printf(reply_fmt,len,jsonbuff);
 }

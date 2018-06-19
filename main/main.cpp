@@ -24,12 +24,9 @@
 
 #include "mongoose/WebService.h"
 
-#define MG_LISTEN_ADDR "80"
-
-
 //Somente pra não ferrar com o Eclipse
-#undef BIT
-#define BIT(nr) (1UL<<(nr))
+//#undef BIT
+//#define BIT(nr) (1UL<<(nr))
 
 extern "C" {
    void app_main();
@@ -52,14 +49,14 @@ void callback_updateSTA(int32_t ip){
 	WifiHandler::get()->updateSTA();
 }
 
-int64_t INTERNAL_PLEASE_RESTART = INT64_MAX;
+int64_t GLOBAL_PLEASE_RESTART = INT64_MAX;
 
 void app_main(){
 	nvs_flash_init();
     CM::get()->loadFromNVM();
 	//Initialize basic peripherals
 	Lcd *lcd = Lcd::get();
-    lcd->setup();
+    //lcd->setup();
 
     WifiHandler::get();
     WifiHandler::get()->updateAP();
@@ -117,7 +114,9 @@ void app_main(){
         lcd->invert(10,10,30,30);
         lcd->refresh();
         vTaskDelay(100);
-        if(INTERNAL_PLEASE_RESTART < esp_timer_get_time()){
+        uint8_t buttons = lcd->buttons_waitPress(lcd->BUTTON_BACK | lcd->BUTTON_LEFT);
+        printf("buttons: 0x%02x\n",buttons);
+        if(GLOBAL_PLEASE_RESTART < esp_timer_get_time()){
         	CM::get()->saveToNVM();
             printf("Restarting now.\n");
             esp_restart();
