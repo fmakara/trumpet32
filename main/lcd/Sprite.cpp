@@ -10,6 +10,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+
+
 Sprite::Sprite(uint8_t *memory, uint32_t _width, uint32_t _height, uint32_t _step) {
 	w = _width;
 	h = _height;
@@ -17,6 +19,12 @@ Sprite::Sprite(uint8_t *memory, uint32_t _width, uint32_t _height, uint32_t _ste
 	oy = 0;
 	buffer = memory;
 	if(s<(h+7)/8)s = (h+7)/8;
+	dynamic = false;
+}
+
+Sprite::Sprite(uint32_t _width, uint32_t _height, uint32_t _step): Sprite(NULL, _width, _height, _step){
+	buffer = (uint8_t*)malloc(w*s);
+	dynamic = true;
 }
 
 Sprite::Sprite(Sprite *origin, uint32_t offx, uint32_t offy, uint32_t width, uint32_t height){
@@ -31,10 +39,13 @@ Sprite::Sprite(Sprite *origin, uint32_t offx, uint32_t offy, uint32_t width, uin
 	s = origin->step();
 	oy = offy%8;
 	buffer = origin->memory()+s*offx+offy/8;
+	dynamic = false;
 }
 
 
-Sprite::~Sprite() {}
+Sprite::~Sprite() {
+	if(dynamic && buffer!=NULL)free(buffer);
+}
 uint32_t Sprite::width(){return w;}
 uint32_t Sprite::height(){return h;}
 uint8_t* Sprite::memory(){return buffer;}

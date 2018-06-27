@@ -21,7 +21,7 @@ uint8_t* Character::loadFrom(uint8_t height, uint8_t *mem){
 	return mem+2+s*w;
 }
 
-uint32_t Character::ewidth() { return s+o; }
+uint32_t Character::ewidth() { return w+o; }
 uint32_t Character::offset() { return o; }
 
 int32_t Character::print(Sprite *m, int32_t x, int32_t y){

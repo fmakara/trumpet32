@@ -24,6 +24,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "ConfigManager.h"
+#include "../ui/PopUpper.h"
 
 
 extern void tcpip_adapter_init();
@@ -179,6 +180,7 @@ esp_err_t WifiHandler::event_handler(void *ctx, system_event_t *event){
         CM::get()->set(CM::WIFI_STA_GW,(int32_t)event->event_info.got_ip.ip_info.gw.addr);
         CM::get()->set(CM::WIFI_STA_NM,(int32_t)event->event_info.got_ip.ip_info.netmask.addr);
         xEventGroupSetBits(get()->wifi_event_group, WIFI_CONNECTED_BIT);
+        PopUpper::get()->popup(10000,0,"My IP is %s\n",ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
         break;
     case SYSTEM_EVENT_AP_STACONNECTED:
         ESP_LOGI("wifi", "station:" MACSTR " join, AID=%d",

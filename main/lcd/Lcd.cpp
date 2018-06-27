@@ -90,9 +90,9 @@ Lcd::Lcd(gpio_num_t cs, gpio_num_t miso, gpio_num_t mosi,
     ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
     ESP_ERROR_CHECK(ret);
 
+    root = ScreenElement::createList(NULL);
+
     setup();
-
-
 }
 
 void Lcd::spi_send(uint8_t byte, uint8_t dc){
@@ -184,12 +184,12 @@ void Lcd::setup(){
 void Lcd::task(void* arg){
 	Lcd *lcd = (Lcd*) arg;
 	while(true){
-		//lcd->root->renderInto(lcd);
+		lcd->clear();
+		lcd->root->renderInto(lcd);
 		lcd->refresh();
 		vTaskDelay(20);
 	}
 }
-
 
 void Lcd::refresh(){
     spi_send(LCD_SETY,0);

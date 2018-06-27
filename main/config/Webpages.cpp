@@ -130,6 +130,7 @@ void screen_cgi(HTTPData *d){
 	char inputBuff[16];
 	int len=0;
 	Lcd *lcd = Lcd::get();
+	int64_t begin = esp_timer_get_time();
 	if(d->getGET("keys",inputBuff,15)>0){
 		lcd->buttonOverride = atoi(inputBuff);
 	}

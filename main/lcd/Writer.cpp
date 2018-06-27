@@ -20,7 +20,7 @@ Writer::Writer(Charset *s, Sprite *c, char *t):
 { }
 
 int32_t Writer::max_scroll(int32_t *max_x, int32_t *max_y){
-	int32_t x=0, y=0, o=0;
+	int32_t x=0, y=0, o=0;/*
 	if(set==NULL || canvas==NULL){
 		printf("Writer ERROR: Charset or Canvas not specified!\n");
 		return 0;
@@ -53,7 +53,7 @@ int32_t Writer::max_scroll(int32_t *max_x, int32_t *max_y){
 	if(x<0)x=0;
 	if(y<0)y=0;
 	if(max_x!=NULL)*max_x = x;
-	if(max_y!=NULL)*max_y = y;
+	if(max_y!=NULL)*max_y = y;*/
 	return y;
 }
 
@@ -62,7 +62,7 @@ void Writer::fast_print(char *t){
 	render();
 }
 void Writer::render(){
-	int32_t x = -scroll_x, y = -scroll_y, o;
+	/*int32_t x = -scroll_x, y = -scroll_y, o;
 	if(set==NULL || canvas==NULL){
 		printf("Writer ERROR: Charset or Canvas not specified!\n");
 		return;
@@ -91,5 +91,5 @@ void Writer::render(){
 				x = c->print(canvas,x,y);
 			}
 		}
-	}
+	}*/
 }

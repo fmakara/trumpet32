@@ -26,15 +26,15 @@ public:
 	void visible(bool _v);
 	bool visible();
 
-	void setPosition(int32_t x, int32_t y, uint_fast8_t _mode);
+	void setPosition(int32_t x, int32_t y, uint_fast8_t _mode=Sprite::COPY_BOTH);
 	int32_t getPosX();
 	int32_t getPosY();
 	uint_fast8_t getMode();
 
+	Sprite *spr;
 protected:
 	void reposition();
 
-	Sprite *spr;
 	int32_t z;
 	bool v;
 

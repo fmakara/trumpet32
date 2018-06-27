@@ -54,6 +54,7 @@ void ScreenElement::renderInto(Sprite *dest){
 		if(p->spr!=NULL && p->v){
 			p->spr->copyTo(dest,p->posx,p->posy,p->mode);
 		}
+		p = p->next;
 	}
 }
 

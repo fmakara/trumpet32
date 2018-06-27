@@ -10,6 +10,7 @@
 
 class Sprite {
 public:
+	Sprite(uint32_t _width, uint32_t _height, uint32_t _step=0);
 	Sprite(uint8_t *memory, uint32_t _width, uint32_t _height, uint32_t _step=0);
 	Sprite(Sprite *origin, uint32_t offx, uint32_t offy, uint32_t width, uint32_t height);
 	virtual ~Sprite();
@@ -36,6 +37,7 @@ public:
 protected:
 	uint32_t w, h, s, oy;
 	uint8_t *buffer;
+	bool dynamic;
 };
 
 #endif /* MAIN_LCD_SPRITE_H_ */
