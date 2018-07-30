@@ -8,6 +8,9 @@
 #include "audio/AdcReader.h"
 #include "config/Webpages.h"
 #include "ui/PopUpper.h"
+#include "ui/Dictionary.h"
+#include "ui/MainMenu.h"
+#include "audio/Player.h"
 
 #include "esp_system.h"
 #include "esp_spi_flash.h"
@@ -61,6 +64,10 @@ void app_main(){
 	//Initialize basic peripherals
 	Lcd *lcd = Lcd::get();
 	PopUpper::get();
+	Dictionary::global = new Dictionary();
+
+	printf("YES: %s\n",Dictionary::global->get(Dictionary::YES_CAP));
+	printf("NO: %s\n",Dictionary::global->get(Dictionary::NO_CAP));
 
     WifiHandler::get();
     WifiHandler::get()->updateAP();
@@ -104,9 +111,14 @@ void app_main(){
 
     int r = 0;
     ScreenElement mine(new Sprite(30,30),1);
+    ScreenElement menu(new Sprite(84,48),2);
+    menu.addToList(lcd->root);
+    Player *p = Player::get();
     mine.addToList(lcd->root);
     mine.setPosition(10,10);
     while(1){
+    	//p->play();
+    	MainMenu::get()->run(&menu);
         mine.spr->clear();
         mine.spr->circle(42,24,r);
         mine.spr->circle(42,24,r+5);
@@ -120,7 +132,7 @@ void app_main(){
         r = (r+1)%5;
         mine.spr->invert(10,10,30,30);
 
-        vTaskDelay(100);
+        vTaskDelay(1000);
         //uint8_t buttons = lcd->buttons_waitPress(lcd->BUTTON_BACK | lcd->BUTTON_LEFT);
         //printf("buttons: 0x%02x\n",buttons);
         if(GLOBAL_PLEASE_RESTART < esp_timer_get_time()){

@@ -57,6 +57,7 @@ public:
     //MAX_CONFIG always at the end
     CONFIGMANAGER_MAX
 	};
+  static const Config INVALID = CONFIGMANAGER_MAX;
   enum ConfigType {
     INTEGER, STRING, IP, BAD
   };
@@ -69,6 +70,7 @@ public:
   int32_t min(Config c);
   int32_t max(Config c);
   ConfigType type(Config c);
+
 
   void setCallback(Config c, void (*cb)(int32_t));
 

@@ -255,9 +255,12 @@ int ConfigManager::unicode2char(char *j, char *s, int max){
   char *lj = j, *ls = s;
   int unicode, size=0;
   max--;
+  if(*lj == '"'){
+	  lj++;
+  }
   while(*lj!=0 && size<max){
     if(*lj == '"'){
-      lj++;
+      break;
     }else if(*lj == '\\'){
       lj++;
       switch(*lj){

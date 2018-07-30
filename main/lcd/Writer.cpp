@@ -14,24 +14,24 @@ Writer::Writer():
 	scroll_x(0), scroll_y(0), no_overflow_x(0)
 { }
 
-Writer::Writer(Charset *s, Sprite *c, char *t):
-	set(s), canvas(c), text(t),
+Writer::Writer(Character *_list, Sprite *c, char *t):
+	set(_list), canvas(c), text(t),
 	scroll_x(0), scroll_y(0), no_overflow_x(0)
 { }
 
-int32_t Writer::max_scroll(int32_t *max_x, int32_t *max_y){
-	int32_t x=0, y=0, o=0;/*
+int32_t Writer::max_scroll(int32_t *max_x, int32_t *max_y, bool autoZero){
+	int32_t x=0, y=0, o=0;
 	if(set==NULL || canvas==NULL){
 		printf("Writer ERROR: Charset or Canvas not specified!\n");
 		return 0;
 	}
-	y = set->height();
+	y = set[0].height();
 	for(o=0;text[o]!='\0';o++){
 		if(text[0]=='\n'){
 			x=0;
 			y+=set->height();
 		}else{
-			Character *c = set->at(text[o]);
+			Character *c = set+(unsigned)text[o];
 			if(no_overflow_x){
 				if(c->width()+x<canvas->width()){
 					x += c->ewidth();
@@ -50,10 +50,10 @@ int32_t Writer::max_scroll(int32_t *max_x, int32_t *max_y){
 	}
 	x-=canvas->width();
 	y-=canvas->height();
-	if(x<0)x=0;
-	if(y<0)y=0;
+	if(autoZero && x<0)x=0;
+	if(autoZero && y<0)y=0;
 	if(max_x!=NULL)*max_x = x;
-	if(max_y!=NULL)*max_y = y;*/
+	if(max_y!=NULL)*max_y = y;
 	return y;
 }
 
@@ -62,7 +62,7 @@ void Writer::fast_print(char *t){
 	render();
 }
 void Writer::render(){
-	/*int32_t x = -scroll_x, y = -scroll_y, o;
+	int32_t x = -scroll_x, y = -scroll_y, o;
 	if(set==NULL || canvas==NULL){
 		printf("Writer ERROR: Charset or Canvas not specified!\n");
 		return;
@@ -75,7 +75,7 @@ void Writer::render(){
 			x=0;
 			y+=set->height();
 		}else{
-			Character *c = set->at(text[o]);
+			Character *c = set+(unsigned)text[o];
 			if(no_overflow_x){
 				if(c->width()+x<canvas->width()){
 					x = c->print(canvas,x,y);
@@ -91,5 +91,13 @@ void Writer::render(){
 				x = c->print(canvas,x,y);
 			}
 		}
-	}*/
+	}
+}
+
+void Writer::renderCentered(char *str){
+	int32_t max_x;
+	if(str!=NULL)text = str;
+	max_scroll(&max_x,NULL);
+	scroll_x = max_x/2;
+	render();
 }
