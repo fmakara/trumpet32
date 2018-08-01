@@ -36,8 +36,9 @@ void MainMenu::run(ScreenElement *scr){
 	Sprite *s = scr->sprite();
 	uint8_t lastInput = 0;
 	Lcd *lcd = Lcd::get();
+  CM *cm = CM::get();
 	//only for menus
-	int menu_scrollcount=0;
+	int scrollcount=0;
 	int menu_nlines = ((s->height()-3)/NS_font[0].height())-1;
 	Sprite *menuSpriteTop = new Sprite(s,0,0,s->width(),NS_fontheight);
 	std::vector<Sprite*> menuSpriteList;
@@ -76,14 +77,14 @@ void MainMenu::run(ScreenElement *scr){
 				if(i+shown->menu_offset == shown->menu_index){
 					int txtwidth;
 					NS_writer.max_scroll(&txtwidth,NULL);
-					if(menu_scrollcount<8){
+					if(scrollcount<8){
 						//offset already at 0
-					}else if((menu_scrollcount-8)*5<+txtwidth){
-						NS_writer.scroll_x = (menu_scrollcount-8)*5;
-					}else if((menu_scrollcount-16)*5<+txtwidth){
+					}else if((scrollcount-8)*5<+txtwidth){
+						NS_writer.scroll_x = (scrollcount-8)*5;
+					}else if((scrollcount-16)*5<+txtwidth){
 						NS_writer.scroll_x = txtwidth;
 					}else{
-						menu_scrollcount = 0;
+						scrollcount = 0;
 					}
 					NS_writer.render();
 					menuSpriteList[i]->invert(0,0,999,999);
@@ -100,7 +101,57 @@ void MainMenu::run(ScreenElement *scr){
 						s->width()-1,NS_fontheight+3+perline*(menu_nlines+shown->menu_offset));
 			}
 
-		}else{
+		}else if(shown->type==ME_INTEGER_C ||
+        shown->type==ME_STRING_C ||
+        shown->type==ME_IP_C ||
+        shown->type==ME_ENUM_C ||
+        ){
+      char txtbuffer[512], *txtvalue;
+      int txtwidth=0;
+			s->clear();
+      
+      // Propriety name
+			NS_writer.scroll_y=0;
+			NS_writer.canvas = s;
+			NS_writer.renderCentered((char*)DIC::global->get(shown->name));
+			
+      // Horizontal tab and scroll bar
+			s->line(0,NS_fontheight+1,s->width(),NS_fontheight+1);
+      
+      //recover the string value (CM has already for IP,INT and STRING)
+      if(shown->type==ME_ENUM_C){
+        int32_t value = cm->get(shown->cfg);
+        if(shown->enumerate->count(value)>0){
+          txtvalue = (char*)DIC::global->get(shown->enumerate[value]);
+        }else{
+          sprintf(txtbuffer,"ENUM?(%d)",value);
+          txtvalue = txtbuffer;
+        }
+      }else{
+        cm->get(shown->cfg,txtbuffer);
+        txtvalue = txtbuffer;
+      }
+      NS_writer.max_scroll(&txtwidth,NULL);
+			NS_writer.scroll_x = 0;
+      NS_writer.scroll_y = -(NS_fontheight*3/2+s->height()/2);
+      
+      //Write centered or (if too big) scrolling
+      if(txtwidth>0){
+        if(scrollcount<8){
+          //offset already at 0
+        }else if((scrollcount-8)*5<+txtwidth){
+					NS_writer.scroll_x = (scrollcount-8)*5;
+				}else if((scrollcount-16)*5<+txtwidth){
+					NS_writer.scroll_x = 0;croll_x = txtwidth;
+				}else{
+					scrollcount = 0;
+				}
+				NS_writer.render();
+      }else{
+			  NS_writer.renderCentered(txtvalue);
+      }
+
+    }else{
 			PopUpper::get()->popup("Not implemented / error",3000,0);
 			break;
 		}
@@ -128,11 +179,28 @@ void MainMenu::run(ScreenElement *scr){
 				shown->menu_index++;
 			}
 			if(lastInput){
-				menu_scrollcount=0;
+				scrollcount=0;
 			}else{
-				menu_scrollcount++;
+				scrollcount++;
 			}
-		}
+		}else if(shown->type==ME_INTEGER_C || 
+        shown->type==ME_STRING_C ||
+        shown->type==ME_IP_C ||
+        shown->type==ME_ENUM_C ){
+			lastInput = lcd->buttons_get(Lcd::BUTTONS_USED);
+			if(!lastInput)lastInput = lcd->buttons_waitPress(Lcd::BUTTONS_USED,300);
+      
+      if(lastInput){
+        //Go back with any button
+				if(shown->father==NULL)break;
+				shown = shown->father;
+      }
+			if(lastInput){
+				scrollcount=0;
+			}else{
+				scrollcount++;
+			}
+    }
 	}
 	//cleanup
 	scr->visible(false);

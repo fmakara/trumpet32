@@ -24,29 +24,32 @@ protected:
 	static MainMenu *singleton;
 	enum MenuElementType {
 		ME_MENU,
+    ME_INTEGER_C
 		ME_INTEGER,
+    ME_STRING_C
 		ME_STRING,
+    ME_IP_C,
+    ME_IP_,
+    ME_ENUM_C,
+    ME_ENUM,
 	};
 	struct MenuElement {
 		MenuElementType type;
 		DIC::DICTindex name;
 		CM::Config cfg;
-		bool editable;
 		MenuElement *father;
 		std::vector<MenuElement*> *childs;
-		std::map<int,MenuElement*> *enumerate;
+		std::map<int,DIC::DICTindex> *enumerate;
 		int menu_index;
 		int menu_offset;
 		MenuElement(
 				MenuElementType _type,
 				DIC::DICTindex _name,
 				CM::Config _cfg,
-				bool _editable,
 				MenuElement *_father){
 			type = _type;
 			name =_name;
 			cfg = _cfg;
-			editable = _editable;
 			father = _father;
 			childs = NULL;
 			enumerate = NULL;
