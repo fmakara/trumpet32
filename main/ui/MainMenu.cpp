@@ -29,7 +29,7 @@ MainMenu::MainMenu() {
 }
 
 void MainMenu::run(ScreenElement *scr){
-	MenuElement *shown = root;
+	MenuElement *shown = root, *lastShown = root;
 	Character *NS_font = Charset::get()->asArray(MainMenuFontNormal);
 	Writer NS_writer(NS_font,NULL,NULL);
 	uint32_t NS_fontheight = NS_font[0].height();
@@ -39,6 +39,7 @@ void MainMenu::run(ScreenElement *scr){
   CM *cm = CM::get();
 	//only for menus
 	int scrollcount=0;
+  bool justEnteredMenu = true;
 	int menu_nlines = ((s->height()-3)/NS_font[0].height())-1;
 	Sprite *menuSpriteTop = new Sprite(s,0,0,s->width(),NS_fontheight);
 	std::vector<Sprite*> menuSpriteList;
@@ -151,6 +152,71 @@ void MainMenu::run(ScreenElement *scr){
 			  NS_writer.renderCentered(txtvalue);
       }
 
+    }else if(shown->type==ME_ENUM){
+      if(justEnteredMenu){
+        //Find the corresponding index of the enum
+        int32_t value = cm->get(shown->cfg);
+        int idx = 0;
+        if(shown->enumerate->count(value)>0){
+          std::map<int,DIC::DICTindex>::iterator it = shown->enumerate->begin();
+          for(idx=0 ; it->first!=idx ; ++it, ++idx);
+          shown->menu_index=idx;
+        }
+        shown->menu_index=idx;
+      }
+      //Find the number of lines available to show
+			//housekeeping for the selected index and screen offset
+			if(shown->menu_index<0)shown->menu_index=0;
+			if(shown->menu_index>=shown->enumerate->size())shown->menu_index=shown->enumerate->size()-1;
+
+			if(shown->menu_offset>=(shown->enumerate->size()-menu_nlines))
+				shown->menu_offset=(shown->enumerate->size()-menu_nlines);
+			if(shown->menu_offset<0)shown->menu_offset=0;
+
+			//The offset shall always follow the index within the available window
+			if(shown->menu_index>=shown->menu_offset+menu_nlines)
+				shown->menu_offset = shown->menu_index-menu_nlines+1;
+			if(shown->menu_index<shown->menu_offset)
+				shown->menu_offset = shown->menu_index;
+
+			//Begin the drawing
+			s->clear();
+			NS_writer.scroll_y=0;
+			NS_writer.canvas = menuSpriteTop;
+			NS_writer.renderCentered((char*)DIC::global->get(shown->name));
+      
+      std::map<int,DIC::DICTindex>::iterator it = shown->enumerate->begin();
+      for(int i=0;i<shown->menu_offset;i++)++it;
+      for(int i=0;i<menu_nlines;i++,++it){
+				NS_writer.scroll_x=0;
+				NS_writer.canvas = menuSpriteList[i];
+				NS_writer.text = (char*)DIC::global->get(it->second);
+				if(i+shown->menu_offset == shown->menu_index){
+					int txtwidth;
+					NS_writer.max_scroll(&txtwidth,NULL);
+					if(scrollcount<8){
+						//offset already at 0
+					}else if((scrollcount-8)*5<+txtwidth){
+						NS_writer.scroll_x = (scrollcount-8)*5;
+					}else if((scrollcount-16)*5<+txtwidth){
+						NS_writer.scroll_x = txtwidth;
+					}else{
+						scrollcount = 0;
+					}
+					NS_writer.render();
+					menuSpriteList[i]->invert(0,0,999,999);
+				}else{
+					NS_writer.render();
+				}
+			}
+
+			// Horizontal tab and scroll bar
+			s->line(0,NS_fontheight+1,s->width(),NS_fontheight+1);
+			if(shown->childs->size()>menu_nlines){
+				int perline = (s->height()-NS_fontheight-3)/shown->childs->size();
+				s->line(s->width()-1,NS_fontheight+3+perline*shown->menu_offset,
+						s->width()-1,NS_fontheight+3+perline*(menu_nlines+shown->menu_offset));
+			}
     }else{
 			PopUpper::get()->popup("Not implemented / error",3000,0);
 			break;
@@ -201,6 +267,8 @@ void MainMenu::run(ScreenElement *scr){
 				scrollcount++;
 			}
     }
+    justEnteredMenu = !(shown==lastShown);
+    lastShown = shown;
 	}
 	//cleanup
 	scr->visible(false);
