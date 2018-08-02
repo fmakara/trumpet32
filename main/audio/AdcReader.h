@@ -14,16 +14,16 @@
 
 class AdcReader {
 public:
-	static AdcReader* get();
-	uint32_t counter;
+  static AdcReader* get();
+  uint32_t counter;
 protected:
-	AdcReader();
-	QueueHandle_t timer_queue;
-	TaskHandle_t handle;
-	uint32_t ulp_addr;
-	static void task(void *arg);
-	static void IRAM_ATTR timerCallback(void *arg);
-	static AdcReader* singleton;
+  AdcReader();
+  QueueHandle_t timer_queue;
+  TaskHandle_t handle;
+  uint32_t ulp_addr;
+  static void task(void *arg);
+  static void IRAM_ATTR timerCallback(void *arg);
+  static AdcReader* singleton;
 };
 
 #endif /* MAIN_AUDIO_ADCREADER_H_ */

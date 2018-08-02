@@ -14,69 +14,69 @@
 Dictionary *Dictionary::global = NULL;
 
 Dictionary::Dictionary(char *str) {
-	buffer = NULL;
-	loadFrom(str);
+  buffer = NULL;
+  loadFrom(str);
 }
 
 Dictionary::~Dictionary(){
-	if(buffer!=NULL)free(buffer);
+  if(buffer!=NULL)free(buffer);
 }
 int Dictionary::loadFrom(char *str){
-	int i, j, stringsFound, sizeNeeded;
-	//Mark the name and default value
-	for(i=0, j=0; i<DICT_MAX ; i++){
-		list[i][0] = list[i][1] = (char*)names+j;
-		do{
-			j++;
-			if(j>=names_size)return -1;
-		}while(names[j]!='\0');
-		j++;
-	}
-	if(str==NULL)return 0;
-	//Find the strings and calculate the internal buffer needed
-	sizeNeeded = 0;
-	for(i=0 ; i<DICT_MAX ; i++){
-		int len = strlen(list[i][0]);
-		bool found = false;
-		char *pos, *beginStr, *endStr;
-		while(!found){
-			pos = strstr(str,list[i][0]);
-			if(pos==NULL)break;
-			if(*(pos-1)=='"' && *(pos+len)=='"'){
-				found = true;
-			}
-		}
-		if(pos==NULL)continue;
-		for(beginStr = pos+len+1 ; *beginStr!='\0' && *beginStr!='"' ; beginStr++);
-		if(*beginStr=='\0')continue;
-				for(endStr = beginStr+1 ; *endStr!='\0' && *endStr!='"' ; endStr++){
-			if(*endStr=='\\')endStr++;
-		}
-		if(*endStr=='\0')continue;
-		list[i][1] = beginStr;
-		sizeNeeded += endStr - beginStr;
-	}
-	if(sizeNeeded==0)return 0;
-	buffer = (char*)malloc(sizeNeeded);
-	if(buffer==NULL)return -1;
-	stringsFound = 0;
-	// Convert from JSON notation and copy into buffer
-	for(i=0, j=0; i<DICT_MAX ; i++){
-		if(list[i][1]>=names && list[i][1]<(names+names_size)){
-			continue;
-		}
-		int cstrlen = ConfigManager::unicode2char(list[i][1], buffer+j,1000);
-		list[i][1] = buffer+j;
-		j+=cstrlen+1;
-		stringsFound++;
-	}
-	return stringsFound;
+  int i, j, stringsFound, sizeNeeded;
+  //Mark the name and default value
+  for(i=0, j=0; i<DICT_MAX ; i++){
+    list[i][0] = list[i][1] = (char*)names+j;
+    do{
+      j++;
+      if(j>=names_size)return -1;
+    }while(names[j]!='\0');
+    j++;
+  }
+  if(str==NULL)return 0;
+  //Find the strings and calculate the internal buffer needed
+  sizeNeeded = 0;
+  for(i=0 ; i<DICT_MAX ; i++){
+    int len = strlen(list[i][0]);
+    bool found = false;
+    char *pos, *beginStr, *endStr;
+    while(!found){
+      pos = strstr(str,list[i][0]);
+      if(pos==NULL)break;
+      if(*(pos-1)=='"' && *(pos+len)=='"'){
+        found = true;
+      }
+    }
+    if(pos==NULL)continue;
+    for(beginStr = pos+len+1 ; *beginStr!='\0' && *beginStr!='"' ; beginStr++);
+    if(*beginStr=='\0')continue;
+    for(endStr = beginStr+1 ; *endStr!='\0' && *endStr!='"' ; endStr++){
+      if(*endStr=='\\')endStr++;
+    }
+    if(*endStr=='\0')continue;
+    list[i][1] = beginStr;
+    sizeNeeded += endStr - beginStr;
+  }
+  if(sizeNeeded==0)return 0;
+  buffer = (char*)malloc(sizeNeeded);
+  if(buffer==NULL)return -1;
+  stringsFound = 0;
+  // Convert from JSON notation and copy into buffer
+  for(i=0, j=0; i<DICT_MAX ; i++){
+    if(list[i][1]>=names && list[i][1]<(names+names_size)){
+      continue;
+    }
+    int cstrlen = ConfigManager::unicode2char(list[i][1], buffer+j,1000);
+    list[i][1] = buffer+j;
+    j+=cstrlen+1;
+    stringsFound++;
+  }
+  return stringsFound;
 }
 const char* Dictionary::get(DICTindex i){
-	if(i>=0 && i<DICT_MAX){
-		return list[i][1];
-	}
-	return list[1][1];
+  if(i>=0 && i<DICT_MAX){
+    return list[i][1];
+  }
+  return list[1][1];
 }
 
 const char Dictionary::names[] = "\
