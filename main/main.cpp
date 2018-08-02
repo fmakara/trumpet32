@@ -34,7 +34,7 @@
 //#define BIT(nr) (1UL<<(nr))
 
 extern "C" {
-   void app_main();
+void app_main();
 }
 
 //uint8_t spr1[84*6] ={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 4, 0, 64, 0, 0, 0, 4, 0, 112, 240, 31, 0, 4, 0, 62, 240, 31, 0, 252, 3, 39, 224, 0, 0, 252, 131, 33, 128, 3, 0, 4, 0, 39, 0, 15, 0, 4, 0, 62, 240, 31, 0, 4, 0, 112, 240, 31, 0, 4, 0, 64, 0, 0, 0, 224, 1, 0, 0, 0, 0, 112, 3, 126, 0, 14, 0, 80, 2, 124, 128, 26, 0, 80, 2, 6, 128, 17, 0, 112, 3, 2, 128, 17, 0, 96, 1, 126, 128, 15, 0, 0, 0, 124, 0, 31, 0, 0, 0, 6, 0, 0, 0, 0, 0, 2, 128, 0, 0, 0, 0, 126, 224, 15, 0, 0, 0, 124, 192, 31, 0, 0, 0, 0, 128, 16, 0, 0, 0, 0, 128, 0, 0, 0, 0, 60, 224, 31, 0, 0, 0, 70, 192, 31, 0, 0, 0, 66, 128, 16, 0, 0, 0, 66, 128, 16, 0, 0, 0, 70, 128, 67, 0, 0, 0, 60, 0, 110, 0, 0, 0, 0, 0, 56, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 128, 3, 0, 0, 0, 0, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 3, 0, 0, 0, 0, 240, 63, 0, 0, 0, 0, 252, 127, 0, 0, 0, 0, 254, 255, 1, 0, 0, 0, 255, 255, 3, 0, 0, 128, 255, 255, 7, 0, 0, 128, 255, 255, 15, 0, 0, 128, 255, 255, 31, 0, 0, 192, 255, 255, 63, 0, 0, 192, 255, 255, 127, 0, 0, 192, 255, 255, 255, 0, 0, 192, 255, 255, 255, 0, 0, 192, 255, 255, 255, 1, 0, 192, 255, 255, 255, 1, 0, 128, 255, 255, 255, 3, 0, 128, 255, 255, 255, 7, 0, 128, 255, 255, 255, 15, 0, 0, 255, 255, 255, 15, 0, 0, 254, 255, 255, 31, 0, 0, 252, 255, 255, 31, 0, 0, 240, 255, 255, 31, 0, 0, 252, 255, 255, 31, 0, 0, 254, 255, 255, 31, 0, 0, 255, 255, 255, 15, 0, 128, 255, 255, 255, 15, 0, 128, 255, 255, 255, 7, 0, 128, 255, 255, 255, 3, 0, 192, 255, 255, 255, 1, 0, 192, 255, 255, 255, 1, 0, 192, 255, 255, 255, 0, 0, 192, 255, 255, 255, 0, 0, 192, 255, 255, 127, 0, 0, 192, 255, 255, 63, 0, 0, 128, 255, 255, 31, 0, 0, 128, 255, 255, 15, 0, 0, 128, 255, 255, 7, 0, 0, 0, 255, 255, 3, 0, 0, 0, 254, 255, 1, 0, 0, 0, 252, 127, 0, 0, 0, 0, 240, 63, 0, 0, 0, 0, 192, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -47,99 +47,96 @@ const uint8_t chrset_p6[]={10, 1, 0, 0, 0, 11, 0, 120, 0, 132, 0, 34, 1, 77, 2, 
 
 
 void callback_updateAP(int32_t ip){
-	WifiHandler::get()->updateAP();
+  WifiHandler::get()->updateAP();
 }
 
 void callback_updateSTA(int32_t ip){
-	WifiHandler::get()->updateSTA();
+  WifiHandler::get()->updateSTA();
 }
 
 int64_t GLOBAL_PLEASE_RESTART = INT64_MAX;
 
 void app_main(){
-	nvs_flash_init();
-    CM::get()->loadFromNVM();
-    //Load the basic font
-    Charset::get()->loadFromBytes(chrset_p6,sizeof(chrset_p6),6);
-	//Initialize basic peripherals
-	Lcd *lcd = Lcd::get();
-	PopUpper::get();
-	Dictionary::global = new Dictionary();
+  nvs_flash_init();
+  CM::get()->loadFromNVM();
+  //Load the basic font
+  Charset::get()->loadFromBytes(chrset_p6,sizeof(chrset_p6),6);
+  //Initialize basic peripherals
+  Lcd *lcd = Lcd::get();
+  PopUpper::get();
+  Dictionary::global = new Dictionary();
 
-	printf("YES: %s\n",Dictionary::global->get(Dictionary::YES_CAP));
-	printf("NO: %s\n",Dictionary::global->get(Dictionary::NO_CAP));
+  WifiHandler::get();
+  WifiHandler::get()->updateAP();
+  WifiHandler::get()->updateSTA();
+  //AdcReader::get();
 
-    WifiHandler::get();
-    WifiHandler::get()->updateAP();
-    WifiHandler::get()->updateSTA();
-	//AdcReader::get();
+  CM::get()->setCallback(CM::WIFI_AP_SSID,callback_updateAP);
+  CM::get()->setCallback(CM::WIFI_STA_SSID,callback_updateSTA);
 
-    CM::get()->setCallback(CM::WIFI_AP_SSID,callback_updateAP);
-    CM::get()->setCallback(CM::WIFI_STA_SSID,callback_updateSTA);
+  esp_vfs_spiffs_conf_t conf = {
+      .base_path = "/spiffs",
+      .partition_label = "storage",
+      .max_files = 5,
+      .format_if_mount_failed = true
+  };
+  esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
-    esp_vfs_spiffs_conf_t conf = {
-		.base_path = "/spiffs",
-		.partition_label = "storage",
-		.max_files = 5,
-		.format_if_mount_failed = true
-	};
-    esp_err_t ret = esp_vfs_spiffs_register(&conf);
-
-	if (ret != ESP_OK) {
-		if (ret == ESP_FAIL) {
-			printf("Failed to mount or format filesystem\n\n");
-		} else if (ret == ESP_ERR_NOT_FOUND) {
-			printf("Failed to find SPIFFS partition\n\n");
-		} else {
-			printf("Failed to initialize SPIFFS (%s)\n\n", esp_err_to_name(ret));
-		}
-		return;
-	}
-
-	size_t total = 0, used = 0;
-	ret = esp_spiffs_info("storage", &total, &used);
-	if (ret != ESP_OK) {
-		printf( "Failed to get SPIFFS partition information (%s)\n\n", esp_err_to_name(ret));
-	} else {
-		printf( "Partition size: total: %d, used: %d\n\n", total, used);
-	}
-
-	WebService *ws = new WebService("80");
-	init_cgi(ws);
-
-	ws->addSpiffs("/*", "/spiffs/*");
-
-    int r = 0;
-    ScreenElement mine(new Sprite(30,30),1);
-    ScreenElement menu(new Sprite(84,48),2);
-    menu.addToList(lcd->root);
-    Player *p = Player::get();
-    mine.addToList(lcd->root);
-    mine.setPosition(10,10);
-    while(1){
-    	//p->play();
-    	MainMenu::get()->run(&menu);
-        mine.spr->clear();
-        mine.spr->circle(42,24,r);
-        mine.spr->circle(42,24,r+5);
-        mine.spr->circle(42,24,r+10);
-        mine.spr->circle(42,24,20-r);
-        mine.spr->circle(42,24,25-r);
-        mine.spr->circle(42,24,30-r);
-        mine.spr->circle(42,24,r+30);
-        mine.spr->circle(42,24,r+35);
-        mine.spr->circle(42,24,r+40);
-        r = (r+1)%5;
-        mine.spr->invert(10,10,30,30);
-
-        vTaskDelay(1000);
-        //uint8_t buttons = lcd->buttons_waitPress(lcd->BUTTON_BACK | lcd->BUTTON_LEFT);
-        //printf("buttons: 0x%02x\n",buttons);
-        if(GLOBAL_PLEASE_RESTART < esp_timer_get_time()){
-        	CM::get()->saveToNVM();
-            printf("Restarting now.\n");
-            esp_restart();
-        }
+  if (ret != ESP_OK) {
+    if (ret == ESP_FAIL) {
+      printf("Failed to mount or format filesystem\n\n");
+    } else if (ret == ESP_ERR_NOT_FOUND) {
+      printf("Failed to find SPIFFS partition\n\n");
+    } else {
+      printf("Failed to initialize SPIFFS (%s)\n\n", esp_err_to_name(ret));
     }
+    return;
+  }
+
+  size_t total = 0, used = 0;
+  ret = esp_spiffs_info("storage", &total, &used);
+  if (ret != ESP_OK) {
+    printf( "Failed to get SPIFFS partition information (%s)\n\n", esp_err_to_name(ret));
+  } else {
+    printf( "Partition size: total: %d, used: %d\n\n", total, used);
+  }
+
+  WebService *ws = new WebService("80");
+  init_cgi(ws);
+
+  ws->addSpiffs("/*", "/spiffs/*");
+
+  int r = 0;
+  ScreenElement mine(new Sprite(30,30),1);
+  ScreenElement menu(new Sprite(84,48),2);
+  menu.addToList(lcd->root);
+  Player *p = Player::get();
+  mine.addToList(lcd->root);
+  mine.setPosition(10,10);
+  while(1){
+    //p->play();
+    MainMenu::get()->run(&menu);
+    mine.spr->clear();
+    mine.spr->circle(42,24,r);
+    mine.spr->circle(42,24,r+5);
+    mine.spr->circle(42,24,r+10);
+    mine.spr->circle(42,24,20-r);
+    mine.spr->circle(42,24,25-r);
+    mine.spr->circle(42,24,30-r);
+    mine.spr->circle(42,24,r+30);
+    mine.spr->circle(42,24,r+35);
+    mine.spr->circle(42,24,r+40);
+    r = (r+1)%5;
+    mine.spr->invert(10,10,30,30);
+
+    vTaskDelay(1000);
+    //uint8_t buttons = lcd->buttons_waitPress(lcd->BUTTON_BACK | lcd->BUTTON_LEFT);
+    //printf("buttons: 0x%02x\n",buttons);
+    if(GLOBAL_PLEASE_RESTART < esp_timer_get_time()){
+      CM::get()->saveToNVM();
+      printf("Restarting now.\n");
+      esp_restart();
+    }
+  }
 }
 

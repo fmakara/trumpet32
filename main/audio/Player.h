@@ -10,13 +10,13 @@
 
 class Player {
 public:
-	static Player* get();
-	void setup_triangle_sine_waves(int bits);
-	void play();
+  static Player* get();
+  void setup_triangle_sine_waves(int bits);
+  void play();
 private:
-	int test_bits=16;
-	static Player* singleton;
-	Player();
+  int test_bits=16;
+  static Player* singleton;
+  Player();
 };
 
 #endif /* MAIN_AUDIO_PLAYER_H_ */
