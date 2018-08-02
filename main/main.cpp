@@ -66,9 +66,6 @@ void app_main(){
   PopUpper::get();
   Dictionary::global = new Dictionary();
 
-  printf("YES: %s\n",Dictionary::global->get(Dictionary::YES_CAP));
-  printf("NO: %s\n",Dictionary::global->get(Dictionary::NO_CAP));
-
   WifiHandler::get();
   WifiHandler::get()->updateAP();
   WifiHandler::get()->updateSTA();

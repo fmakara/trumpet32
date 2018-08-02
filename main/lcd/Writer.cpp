@@ -67,7 +67,7 @@ void Writer::render(){
     printf("Writer ERROR: Charset or Canvas not specified!\n");
     return;
   }
-  canvas->clear();
+  //canvas->clear();
   if(text==NULL)return;
 
   for(o=0;text[o]!='\0';o++){
@@ -97,7 +97,7 @@ void Writer::render(){
 void Writer::renderCentered(char *str){
   int32_t max_x;
   if(str!=NULL)text = str;
-  max_scroll(&max_x,NULL);
+  max_scroll(&max_x,NULL,false);
   scroll_x = max_x/2;
   render();
 }

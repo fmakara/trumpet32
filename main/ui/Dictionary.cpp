@@ -80,43 +80,50 @@ const char* Dictionary::get(DICTindex i){
 }
 
 const char Dictionary::names[] = "\
-YES_CAP\0\
-NO_CAP\0\
-PLAYR_NOTE_CAP\0\
-PLAYR_VOLUME_CAP\0\
-PLAYR_B1_FREQ_CAP\0\
-PLAYR_B1_TIME_CAP\0\
-PLAYR_B_VOLUME_CAP\0\
-PLAYR_B2_FREQ_CAP\0\
-PLAYR_B2_TIME_CAP\0\
-USER_LEDS_CAP\0\
-USER_BUTTONS_CAP\0\
-USER_PISTONS_CAP\0\
-METRO_COMPASS_CAP\0\
-METRO_BPM_CAP\0\
+Sim\0\
+Nao\0\
+Nota tocada\0\
+Volume tocado\0\
+Freq. Bipe 1\0\
+Tempo Bipe 1\0\
+Volume Bipe\0\
+Freq. Bipe 2\0\
+Tempo Bipe 2\0\
+Estado LEDs\0\
+Estado Botoes\0\
+Estado Pistos\0\
+Compasso\0\
+BPM\0\
 MOUTHP_FREQX10_CAP\0\
 MOUTHP_AMPL_CAP\0\
 INSTR_NOTE_NOM_CAP\0\
 INSTR_NOTE_REAL_CAP\0\
 INSTR_AMPLITUDE_CAP\0\
 INSTR_NOTE_ERR_CAP\0\
-SDCARD_STATUS_CAP\0\
-LCD_BRIGHTNESS_CAP\0\
-LCD_CONSTRAST_CAP\0\
+Status SD\0\
+Brilho LCD\0\
+Contraste LCD\0\
 LEDS_INTENSITY_CAP\0\
-WIFI_MODE_CAP\0\
-WIFI_SCAN_TIMES_CAP\0\
-WIFI_AP_CHANNEL_CAP\0\
-WIFI_DEVICENAME_CAP\0\
-WIFI_AP_SSID_CAP\0\
-WIFI_AP_PASSWD_CAP\0\
-WIFI_STA_SSID_CAP\0\
-WIFI_STA_PASSWD_CAP\0\
-WIFI_AP_IP_CAP\0\
-WIFI_STA_IP_CAP\0\
-WIFI_STA_GW_CAP\0\
-WIFI_STA_NM_CAP\0\
-MENU_MAINMENU_CAP\0\
+Modo WiFi\0\
+Numero Scan\0\
+Canal do AP\0\
+Nome do dispositivo\0\
+SSID AP\0\
+Senha AP\0\
+SSID STA\0\
+Senha STA\0\
+IP via AP\0\
+IP via STA\0\
+Gateway via STA\0\
+Mascara via STA\0\
+Menu\0\
+Metronomo\0\
+Status\0\
+WiFi\0\
+Nenhum\0\
+Access Point\0\
+STAcao\0\
+STA e AP\0\
 \0";
 const int Dictionary::names_size = sizeof(names);
 

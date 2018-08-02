@@ -46,13 +46,14 @@ protected:
         MenuElementType _type,
         DIC::DICTindex _name,
         CM::Config _cfg,
-        MenuElement *_father){
+        MenuElement *_father,
+        std::map<int,DIC::DICTindex> *_enum=NULL){
       type = _type;
       name =_name;
       cfg = _cfg;
       father = _father;
       childs = NULL;
-      enumerate = NULL;
+      enumerate = _enum;
       menu_index = 0;
       menu_offset = 0;
     }
