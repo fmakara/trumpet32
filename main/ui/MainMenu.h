@@ -20,7 +20,8 @@ public:
   void run(ScreenElement *scr);
 protected:
   MainMenu();
-  static const int MainMenuFontNormal = 8;
+  static const int MainMenuFontNormal = 6;
+  static const int MainMenuFontBig = 10;
   static MainMenu *singleton;
   enum MenuElementType {
     ME_MENU,
@@ -29,7 +30,7 @@ protected:
     ME_STRING_C,
     ME_STRING,
     ME_IP_C,
-    ME_IP_,
+    ME_IP,
     ME_ENUM_C,
     ME_ENUM,
   };

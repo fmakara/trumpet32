@@ -60,7 +60,7 @@ MainMenu::MainMenu() {
   wifi->childs->push_back(new MenuElement(ME_IP_C,DIC::WIFI_AP_IP_CAP,CM::WIFI_AP_IP,wifi));
   wifi->childs->push_back(new MenuElement(ME_IP_C,DIC::WIFI_STA_IP_CAP,CM::WIFI_STA_IP,wifi));
   wifi->childs->push_back(new MenuElement(ME_IP_C,DIC::WIFI_STA_GW_CAP,CM::WIFI_STA_GW,wifi));
-  wifi->childs->push_back(new MenuElement(ME_IP_C,DIC::WIFI_STA_NM_CAP,CM::WIFI_STA_NM,wifi));
+  wifi->childs->push_back(new MenuElement(ME_IP,DIC::WIFI_STA_NM_CAP,CM::WIFI_STA_NM,wifi));
 
   //Main menu
   root->childs = new std::vector<MenuElement*>();
@@ -74,6 +74,7 @@ MainMenu::MainMenu() {
 void MainMenu::run(ScreenElement *scr){
   MenuElement *shown = root, *lastShown = root;
   Character *NS_font = Charset::get()->asArray(MainMenuFontNormal);
+  Character *BS_font = Charset::get()->asArray(MainMenuFontBig);
   Writer NS_writer(NS_font,NULL,NULL);
   uint32_t NS_fontheight = NS_font[0].height();
   Sprite *s = scr->sprite();
@@ -81,18 +82,41 @@ void MainMenu::run(ScreenElement *scr){
   Lcd *lcd = Lcd::get();
   CM *cm = CM::get();
   //only for menus
-  int scrollcount=0;
+  int scrollcount=0, off_wait_time=1000, on_wait_time=100;
+  //for menus and enums
+  std::vector<Sprite*> menuSpriteList;
+  //only for int
+  const int int_pow2[10]={1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000};
+  int int_value=0, int_max_position;
+  Sprite* intSpriteList[11];
+  //for int and ip
+  int int_position=0;
+  //for ip
+  Sprite* ipSpriteList[15];
+  int ip_value[4];
+
   bool justEnteredMenu = true;
   int menu_nlines = ((s->height()-1)/NS_font[0].height())-1;
   Sprite *menuSpriteTop = new Sprite(s,0,0,s->width(),NS_fontheight);
-  std::vector<Sprite*> menuSpriteList;
+
   for(int i=1;i<=menu_nlines;i++)
     menuSpriteList.push_back(new Sprite(s,0,1+i*NS_fontheight,s->width()-2,NS_fontheight));
-
+  for(int i=0;i<=11;i++){
+    const int refW = BS_font['0'].ewidth(), refH = BS_font['0'].height();
+    intSpriteList[i] = new Sprite(s,s->width()-3-(refW*(i+1)),(s->height()-refH)/2,refW,refH);
+  }
+  for(int i=0;i<=15;i++){
+    const int refW = NS_font['0'].ewidth(), refH = NS_font['0'].height();
+    ipSpriteList[i] = new Sprite(s,s->width()-3-(refW*(i+1)),(s->height()-refH)/2,refW,refH);
+  }
   scr->visible(true);
   while(true){
     //render the screen
     if(shown->type==ME_MENU){
+      if(justEnteredMenu){
+        on_wait_time = 100;
+        off_wait_time = 1000;
+      }
       //Find the number of lines available to show
       //housekeeping for the selected index and screen offset
       if(shown->menu_index<0)shown->menu_index=0;
@@ -153,6 +177,8 @@ void MainMenu::run(ScreenElement *scr){
       char txtbuffer[512], *txtvalue;
       int txtwidth=0;
       s->clear();
+      on_wait_time = 300;
+      off_wait_time = 1000;
 
       // Propriety name
       NS_writer.scroll_x=0;
@@ -206,6 +232,8 @@ void MainMenu::run(ScreenElement *scr){
           for(; it->first!=value ; ++it, ++idx);
         }
         shown->menu_index=idx;
+        on_wait_time = 300;
+        off_wait_time = 1000;
       }
       //Find the number of lines available to show
       //housekeeping for the selected index and screen offset
@@ -261,20 +289,81 @@ void MainMenu::run(ScreenElement *scr){
         s->line(s->width()-1,NS_fontheight+3+perline*shown->menu_offset,
             s->width()-1,NS_fontheight+3+perline*(menu_nlines+shown->menu_offset));
       }
+    }else if(shown->type==ME_INTEGER){
+      if(justEnteredMenu){
+        int_value = cm->get(shown->cfg);
+        int_position = 0;
+        for(int_max_position=1;
+            (int_pow2[int_max_position]<=cm->max(shown->cfg))||
+            (int_pow2[int_max_position]<=-cm->min(shown->cfg));
+            int_max_position++);
+
+        on_wait_time = 300;
+        off_wait_time = 1000;
+      }
+
+      s->clear();
+      NS_writer.scroll_x=0;
+      NS_writer.scroll_y=0;
+      NS_writer.canvas = menuSpriteTop;
+      NS_writer.renderCentered((char*)DIC::global->get(shown->name));
+      char str_val[12]="           ";
+
+      if(int_value>cm->max(shown->cfg))int_value=cm->max(shown->cfg);
+      if(int_value<cm->min(shown->cfg))int_value=cm->min(shown->cfg);
+      if(int_position>=int_max_position)int_position = int_max_position-1;
+      if(int_position<0)int_position=0;
+      sprintf(str_val,"%11d",int_value);
+      for(int i=0;i<11;i++)BS_font[(uint8_t)str_val[10-i]].copyTo(intSpriteList[i],1,0);
+      intSpriteList[int_position]->invert(0,0,99,99);
+    }else if(shown->type==ME_IP){
+      if(justEnteredMenu){
+        uint32_t ip = cm->get(shown->cfg);
+        ip_value[0] = (ip>>0 )&0xFF;
+        ip_value[1] = (ip>>8 )&0xFF;
+        ip_value[2] = (ip>>16)&0xFF;
+        ip_value[3] = (ip>>24)&0xFF;
+        int_position = 9;
+        on_wait_time = 300;
+        off_wait_time = 1000;
+      }
+
+      s->clear();
+      NS_writer.scroll_x=0;
+      NS_writer.scroll_y=0;
+      NS_writer.canvas = menuSpriteTop;
+      NS_writer.renderCentered((char*)DIC::global->get(shown->name));
+      char str_val[16];
+      int pos=0;
+
+      if(int_position>11)int_position = 11;
+      if(int_position<0)int_position=0;
+      for(int i=0;i<4;i++){
+        if(ip_value[i]<0)ip_value[i]=0;
+        if(ip_value[i]>255)ip_value[i]=255;
+        if(int_position-2>i*3)pos++;
+      }
+      pos+=int_position;
+
+      sprintf(str_val,"%3d.%3d.%3d.%3d",ip_value[0],ip_value[1],ip_value[2],ip_value[3]);
+      for(int i=0;i<15;i++)NS_font[(uint8_t)str_val[14-i]].copyTo(ipSpriteList[i],1,0);
+
+      ipSpriteList[pos]->invert(0,0,99,99);
     }else{
       PopUpper::get()->popup("Not implemented / error",3000,0);
       break;
     }
+
     //check for inputs
+    if(lastInput){
+      lcd->buttons_waitRelease(lastInput,off_wait_time);
+    }
+    lastInput = lcd->buttons_get(Lcd::BUTTONS_USED);
+    if(!lastInput){
+      lastInput = lcd->buttons_waitPress(Lcd::BUTTONS_USED,on_wait_time);
+    }
+
     if(shown->type==ME_MENU){
-      //Not only if there is a press, but if it was already pressed and not computed
-      if(lastInput){
-        lcd->buttons_waitRelease(lastInput,1000);
-        lastInput = 0;
-      }else{
-        lastInput = lcd->buttons_get(Lcd::BUTTONS_USED);
-      }
-      if(!lastInput)lastInput = lcd->buttons_waitPress(Lcd::BUTTONS_USED,100);
 
       if(lastInput&(Lcd::BUTTON_BACK|Lcd::BUTTON_LEFT)){
         //Go back, when possible
@@ -285,35 +374,30 @@ void MainMenu::run(ScreenElement *scr){
         shown = shown->childs->at(shown->menu_index);
       }else if(lastInput & Lcd::BUTTON_UP){
         shown->menu_index--;
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
       }else if(lastInput & Lcd::BUTTON_DOWN){
         shown->menu_index++;
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
+      }else{
+        //Return speed to normal
+        on_wait_time = 100;
+        off_wait_time = 1000;
       }
+
     }else if(shown->type==ME_INTEGER_C ||
         shown->type==ME_STRING_C ||
         shown->type==ME_IP_C ||
         shown->type==ME_ENUM_C ){
-      if(lastInput){
-        lcd->buttons_waitRelease(lastInput,1000);
-        lastInput = 0;
-      }else{
-        lastInput = lcd->buttons_get(Lcd::BUTTONS_USED);
-      }
-      if(!lastInput)lastInput = lcd->buttons_waitPress(Lcd::BUTTONS_USED,300);
 
       if(lastInput){
         //Go back with any button
         if(shown->father==NULL)break;
         shown = shown->father;
       }
+
     }else if(shown->type==ME_ENUM){
-      //Not only if there is a press, but if it was already pressed and not computed
-      if(lastInput){
-        lcd->buttons_waitRelease(lastInput,1000);
-        lastInput = 0;
-      }else{
-        lastInput = lcd->buttons_get(Lcd::BUTTONS_USED);
-      }
-      if(!lastInput)lastInput = lcd->buttons_waitPress(Lcd::BUTTONS_USED,300);
 
       if(lastInput&(Lcd::BUTTON_BACK|Lcd::BUTTON_LEFT)){
         //Go back, when possible
@@ -328,8 +412,80 @@ void MainMenu::run(ScreenElement *scr){
         shown = shown->father;
       }else if(lastInput & Lcd::BUTTON_UP){
         shown->menu_index--;
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
       }else if(lastInput & Lcd::BUTTON_DOWN){
         shown->menu_index++;
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
+      }else{
+        //Return speed to normal
+        on_wait_time = 300;
+        off_wait_time = 1000;
+      }
+
+    }else if(shown->type==ME_INTEGER){
+      if(lastInput & Lcd::BUTTON_BACK){
+        //Go back, when possible
+        if(shown->father==NULL)break;
+        shown = shown->father;
+      }else if(lastInput & Lcd::BUTTON_OK){
+        //Save and go back
+        cm->set(shown->cfg,int_value);
+        if(shown->father==NULL)break;
+        shown = shown->father;
+      }else if(lastInput & Lcd::BUTTON_LEFT){
+        //Move digit to left
+        int_position++;
+      }else if(lastInput & Lcd::BUTTON_RIGHT){
+        //Move digit to the right
+        int_position--;
+      }else if(lastInput & Lcd::BUTTON_UP){
+        //increment and increase speed
+        int_value += int_pow2[int_position];
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
+      }else if(lastInput & Lcd::BUTTON_DOWN){
+        //decrement and increase speed
+        int_value -= int_pow2[int_position];
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
+      }else{
+        //Return speed to normal
+        on_wait_time = 300;
+        off_wait_time = 1000;
+      }
+    }else if(shown->type==ME_IP){
+      if(lastInput & Lcd::BUTTON_BACK){
+        //Go back, when possible
+        if(shown->father==NULL)break;
+        shown = shown->father;
+      }else if(lastInput & Lcd::BUTTON_OK){
+        //Save and go back
+        uint32_t ip=(ip_value[0]<<0)|(ip_value[1]<<8)|(ip_value[2]<<16)|(ip_value[3]<<24);
+        cm->set(shown->cfg,ip);
+        if(shown->father==NULL)break;
+        shown = shown->father;
+      }else if(lastInput & Lcd::BUTTON_LEFT){
+        //Move digit to left
+        int_position++;
+      }else if(lastInput & Lcd::BUTTON_RIGHT){
+        //Move digit to the right
+        int_position--;
+      }else if(lastInput & Lcd::BUTTON_UP){
+        //increment and increase speed
+        ip_value[3-int_position/3] += int_pow2[int_position%3];
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
+      }else if(lastInput & Lcd::BUTTON_DOWN){
+        //decrement and increase speed
+        ip_value[3-int_position/3] -= int_pow2[int_position%3];
+        if(off_wait_time<1000)off_wait_time--;
+        else off_wait_time = 300;
+      }else{
+        //Return speed to normal
+        on_wait_time = 300;
+        off_wait_time = 1000;
       }
     }
     if(lastInput){
@@ -347,4 +503,6 @@ void MainMenu::run(ScreenElement *scr){
     delete menuSpriteList.back();
     menuSpriteList.pop_back();
   }
+  for(int i=0;i<11;i++)delete intSpriteList[i];
+  for(int i=0;i<15;i++)delete ipSpriteList[i];
 }
