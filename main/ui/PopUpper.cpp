@@ -12,6 +12,10 @@
 #include "../lcd/Lcd.h"
 #include "../lcd/Charset.h"
 
+#ifndef CONFIG_GLOBAL_POPUPPER_PRIORITY
+#define CONFIG_GLOBAL_POPUPPER_PRIORITY 1
+#endif
+
 PopUpper* PopUpper::singleton = 0;
 PopUpper* PopUpper::get(){
   if(singleton == 0)singleton = new PopUpper();
@@ -23,7 +27,7 @@ PopUpper::PopUpper() {
   DefaultSize = 6;
   setZ(100);
   queue = xQueueCreate( 10, sizeof( POPUP ) );
-  xTaskCreate(task, "PopUpper", 2048, this, 1, &t_handle);
+  xTaskCreate(task, "PopUpper", 2048, this, CONFIG_GLOBAL_POPUPPER_PRIORITY, &t_handle);
 }
 
 void PopUpper::setZ(int _z){ screen.zIndex(_z); }

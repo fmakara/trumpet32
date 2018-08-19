@@ -23,6 +23,9 @@ extern const uint8_t bin_end[]   asm("_binary_ulp_audio_bin_end");
 
 #include "soc/timer_group_struct.h"
 
+#ifndef CONFIG_GLOBAL_ADCREADER_PRIORITY
+#define CONFIG_GLOBAL_ADCREADER_PRIORITY 1
+#endif
 
 #define TIMER_DIVIDER         16  //  Hardware timer clock divider
 #define TIMER_SCALE           (TIMER_BASE_CLK / TIMER_DIVIDER)  // convert counter value to seconds
@@ -38,7 +41,7 @@ AdcReader::AdcReader() {
   timer_queue = xQueueCreate(10, sizeof(int));
   counter = 0;
   ulp_addr = 0;
-  xTaskCreate(task, "AdcReader", 2048, NULL, 1, &handle);
+  xTaskCreate(task, "AdcReader", 2048, NULL, CONFIG_GLOBAL_ADCREADER_PRIORITY, &handle);
 }
 
 void AdcReader::task(void *arg){

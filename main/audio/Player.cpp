@@ -21,6 +21,9 @@
 #define PI 3.14159265
 #define SAMPLE_PER_CYCLE (SAMPLE_RATE/WAVE_FREQ_HZ)
 
+#ifndef CONFIG_GLOBAL_PLAYER_PRIORITY
+#define CONFIG_GLOBAL_PLAYER_PRIORITY 2
+#endif
 
 Player* Player::singleton=NULL;
 

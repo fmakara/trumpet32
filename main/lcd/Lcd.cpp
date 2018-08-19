@@ -15,6 +15,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifndef CONFIG_GLOBAL_LCD_PRIORITY
+#define CONFIG_GLOBAL_LCD_PRIORITY 1
+#endif
+
 #define LCD_FUNCTION         (1<<5)
 #define LCD_FUNCTION_PDOWN   (1<<2)
 #define LCD_FUNCTION_VADDR   (1<<1)
@@ -178,7 +182,7 @@ void Lcd::setup(){
 
   refresh();
 
-  xTaskCreate(task, "LcdRefresher", 2048, this, 1, &t_handle);
+  xTaskCreate(task, "LcdRefresher", 2048, this, CONFIG_GLOBAL_LCD_PRIORITY, &t_handle);
 }
 
 void Lcd::task(void* arg){

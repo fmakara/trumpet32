@@ -27,6 +27,9 @@
 #include "ConfigManager.h"
 #include "../ui/PopUpper.h"
 
+#ifndef CONFIG_GLOBAL_WIFIHANDLER_PRIORITY
+#define CONFIG_GLOBAL_WIFIHANDLER_PRIORITY 1
+#endif
 
 extern void tcpip_adapter_init();
 
@@ -73,7 +76,7 @@ WifiHandler::WifiHandler() {
   records_count = 0;
   records = NULL;
   records_manual_semaphore = 0;
-  xTaskCreate(task, "WifiHandler", 2048, this, 1, &handle);
+  xTaskCreate(task, "WifiHandler", 2048, this, CONFIG_GLOBAL_WIFIHANDLER_PRIORITY, &handle);
 }
 
 

@@ -1,0 +1,23 @@
+menu "Trumpet Configuration"
+
+config GLOBAL_PLAYER_PRIORITY
+    int "Priority of 'Player'"
+    default 2
+
+config GLOBAL_WIFIHANDLER_PRIORITY
+    int "Priority of 'WifiHandler'"
+    default 1
+
+config GLOBAL_ADCREADER_PRIORITY
+    int "Priority of 'LCD'"
+    default 1
+
+config GLOBAL_LCD_PRIORITY
+    int "Priority of 'ADCReader'"
+    default 1
+
+config GLOBAL_POPUPPER_PRIORITY
+    int "Priority of 'PopUpper'"
+    default 1
+
+endmenu
