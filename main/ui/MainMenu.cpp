@@ -35,7 +35,7 @@ MainMenu::MainMenu() {
   // General status submenu
   MenuElement *status = new MenuElement(ME_MENU,DIC::MENU_STATUS_CAP,CM::INVALID,root);
   status->childs = new std::vector<MenuElement*>();
-  status->childs->push_back(new MenuElement(ME_INTEGER_C,DIC::PLAYR_NOTE_CAP,CM::PLAYR_NOTE,status));
+  status->childs->push_back(new MenuElement(ME_INTEGER_C,DIC::PLAYR_NOTE_CAP,CM::PLAYR_FREQ,status));
   status->childs->push_back(new MenuElement(ME_INTEGER_C,DIC::PLAYR_VOLUME_CAP,CM::PLAYR_VOLUME,status));
   status->childs->push_back(new MenuElement(ME_INTEGER_C,DIC::USER_LEDS_CAP,CM::USER_LEDS,status));
   status->childs->push_back(new MenuElement(ME_INTEGER_C,DIC::USER_BUTTONS_CAP,CM::USER_BUTTONS,status));

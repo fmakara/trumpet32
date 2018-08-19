@@ -18,7 +18,7 @@ public:
 
   enum Config {
     //Integer configs
-    PLAYR_NOTE = 0,
+    PLAYR_FREQ = 0,
     PLAYR_VOLUME,
     PLAYR_B1_FREQ,
     PLAYR_B1_TIME,
