@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "esp_types.h"
+#include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -41,10 +42,11 @@ WifiHandler* WifiHandler::get(){
 
 WifiHandler::WifiHandler() {
   wifi_init_config_t configs = WIFI_INIT_CONFIG_DEFAULT();
-  char buff[60] = "Trumpet32   ";
+  char buff[60] = "Trumpet32 Test";
 
   // Begin of mDNS (only available to STA mode)
   CM::get()->get(CM::WIFI_DEVICENAME,buff+10);
+  if(strlen(buff)==10)strcpy(buff+10,"Clean");
   ESP_ERROR_CHECK( mdns_init() );
   ESP_ERROR_CHECK( mdns_hostname_set(buff+10) );
   ESP_ERROR_CHECK( mdns_instance_name_set(buff) );
@@ -178,8 +180,6 @@ esp_err_t WifiHandler::event_handler(void *ctx, system_event_t *event){
     esp_wifi_connect();
     break;
   case SYSTEM_EVENT_STA_GOT_IP:
-    ESP_LOGI("wifi", "got ip:%s",
-        ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
     CM::get()->set(CM::WIFI_STA_IP,(int32_t)event->event_info.got_ip.ip_info.ip.addr);
     CM::get()->set(CM::WIFI_STA_GW,(int32_t)event->event_info.got_ip.ip_info.gw.addr);
     CM::get()->set(CM::WIFI_STA_NM,(int32_t)event->event_info.got_ip.ip_info.netmask.addr);

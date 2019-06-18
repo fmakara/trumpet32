@@ -44,12 +44,13 @@ void lcd_spi_pre_transfer_callback(spi_transaction_t *t){
 
 Lcd* Lcd::singleton = 0;
 Lcd* Lcd::get(){
-  if(singleton == 0)singleton = new Lcd(GPIO_NUM_5,GPIO_NUM_19,GPIO_NUM_23,GPIO_NUM_18,GPIO_NUM_21,GPIO_NUM_22);
+  if(singleton == 0)singleton = new Lcd(GPIO_NUM_5,GPIO_NUM_19,GPIO_NUM_23,GPIO_NUM_18,GPIO_NUM_21,GPIO_NUM_22,GPIO_NUM_17);
   return singleton;
 }
 
 Lcd::Lcd(gpio_num_t cs, gpio_num_t miso, gpio_num_t mosi,
-    gpio_num_t clk , gpio_num_t rst, gpio_num_t dc) : Sprite(mem,84,48,6) {
+    gpio_num_t clk , gpio_num_t rst, gpio_num_t dc,
+    gpio_num_t bl) : Sprite(mem,84,48,6) {
 
   lastButtonRefresh = 0;
   lastButtons = 0;
@@ -66,6 +67,7 @@ Lcd::Lcd(gpio_num_t cs, gpio_num_t miso, gpio_num_t mosi,
   clk_pin = clk;
   rst_pin = rst;
   dc_pin = dc;
+  bl_pin = bl;
 
   esp_err_t ret;
   spi_bus_config_t buscfg;
@@ -164,12 +166,15 @@ void Lcd::setup(){
   gpio_pad_select_gpio(rst_pin);
   gpio_pad_select_gpio(dc_pin);
   gpio_pad_select_gpio(cs_pin);
+  gpio_pad_select_gpio(bl_pin);
   gpio_set_direction(rst_pin, GPIO_MODE_OUTPUT);
   gpio_set_direction(dc_pin, GPIO_MODE_OUTPUT);
   gpio_set_direction(cs_pin, GPIO_MODE_OUTPUT);
+  gpio_set_direction(bl_pin, GPIO_MODE_OUTPUT);
   gpio_set_level(dc_pin, 0);
   gpio_set_level(rst_pin, 0);
   gpio_set_level(cs_pin, 1);
+  gpio_set_level(bl_pin, 0);
   vTaskDelay(10);
   gpio_set_level(rst_pin, 1);
   vTaskDelay(10);
@@ -222,7 +227,7 @@ uint8_t Lcd::buttons_get(uint8_t buttons){
   if(buttonOverride&(~(uint32_t)BUTTONS_USED)){
     return buttonOverride & buttons;
   }else{
-    return lastButtons & buttons;
+    return ~lastButtons & buttons;
   }
 }
 

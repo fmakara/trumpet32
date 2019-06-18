@@ -12,14 +12,7 @@
 #include "WifiHandler.h"
 #include "esp_err.h"
 #include "../lcd/Lcd.h"
-
-void init_cgi(WebService *ws){
-  ws->addCgi("/cgi/config.cgi", config_cgi);
-  ws->addCgi("/cgi/stations.cgi", stations_cgi);
-  ws->addCgi("/cgi/save.cgi", save_cgi);
-  ws->addCgi("/cgi/reboot.cgi", reboot_cgi);
-  ws->addCgi("/cgi/screen.cgi", screen_cgi);
-}
+#include "../audio/AdcReader.h"
 
 static const char *reply_fmt =
     "HTTP/1.0 200 OK\r\n"
@@ -27,6 +20,37 @@ static const char *reply_fmt =
     "Content-Type: application/json\r\n"
     "Content-Length: %d\r\n"
     "\r\n%s";
+
+void samples_cgi(HTTPData *d){
+  int len=0;
+  char jsonbuff[2000];
+  AdcReader *adc = AdcReader::get();
+  uint8_t bu = adc->bufferUsed ? 0 : 1;
+  len = sprintf(jsonbuff,
+      "HTTP/1.0 200 OK\r\n"
+      "Connection: close\r\n"
+      "Content-Type: application/json\r\n"
+      "Content-Length: %d\r\n\r\n", 3*5000 );
+  d->send(jsonbuff, len);
+  printf("Header sent\r\n");
+  for(int i=0; i<10; i++){
+    for(int j=0; j<500; j++){
+      sprintf(jsonbuff+j*3, "%02X,", adc->buffers[0][bu][j+i*500]);
+    }
+    d->send(jsonbuff, 500*3);
+  }
+  printf("End sent-----\r\n");
+}
+
+void init_cgi(WebService *ws){
+  ws->addCgi("/cgi/config.cgi", config_cgi);
+  ws->addCgi("/cgi/stations.cgi", stations_cgi);
+  ws->addCgi("/cgi/save.cgi", save_cgi);
+  ws->addCgi("/cgi/reboot.cgi", reboot_cgi);
+  ws->addCgi("/cgi/screen.cgi", screen_cgi);
+  ws->addCgi("/cgi/samples.cgi", samples_cgi);
+}
+
 
 void config_cgi(HTTPData *d){
   int len=0, i=0;
@@ -56,11 +80,10 @@ void config_cgi(HTTPData *d){
     }
   }
   if(!print_tudo){
-    len += sprintf(jsonbuff+len-offset,"\n}");
+    len += sprintf(jsonbuff+len-offset,"\n}")-offset;
   }else{
-    len = CM::get()->getFullJSON(jsonbuff,2000);
+    len = CM::get()->getFullJSON(jsonbuff,2000)-1;
   }
-
   d->printf(reply_fmt,len,jsonbuff);
 }
 
@@ -120,9 +143,9 @@ void reboot_cgi(HTTPData *d){
   char jsonbuff[100];
   int len=0;
   extern int64_t GLOBAL_PLEASE_RESTART;
-  len+=sprintf(jsonbuff+len,"{\"ok\":true}");
-  d->printf(reply_fmt,len,jsonbuff);
   GLOBAL_PLEASE_RESTART = esp_timer_get_time()+1000*1000;
+  len+=sprintf(jsonbuff+len,"{\"ok\":true,\"time\":%lld}",GLOBAL_PLEASE_RESTART);
+  d->printf(reply_fmt,len,jsonbuff);
 }
 
 void screen_cgi(HTTPData *d){
@@ -130,7 +153,6 @@ void screen_cgi(HTTPData *d){
   char inputBuff[16];
   int len=0;
   Lcd *lcd = Lcd::get();
-  int64_t begin = esp_timer_get_time();
   if(d->getGET("keys",inputBuff,15)>0){
     lcd->buttonOverride = atoi(inputBuff);
   }

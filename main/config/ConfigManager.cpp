@@ -6,6 +6,7 @@
  */
 
 #include "ConfigManager.h"
+#include "esp_err.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -76,10 +77,6 @@ void ConfigManager::get(Config c, char *s){
     sprintf(s,"%d",*((int32_t*)params[c].p));
   }else if(params[c].type==STRING){
     strcpy(s, (char*)params[c].p);
-    if(c==WIFI_STA_SSID){
-      for(int i=0;s[i];i++)printf(".%02X",s[i]);
-      printf("\n");
-    }
   }else if(params[c].type==IP){
     uint8_t *ip = (uint8_t*)params[c].p;
     sprintf(s,"%u.%u.%u.%u",ip[0],ip[1],ip[2],ip[3]);

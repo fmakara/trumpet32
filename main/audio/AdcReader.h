@@ -16,13 +16,16 @@ class AdcReader {
 public:
   static AdcReader* get();
   uint32_t counter;
+  static const uint32_t MAX_BUFFER_SIZE = 5000;
+  uint8_t bufferUsed;
+  uint8_t buffers[2][2][MAX_BUFFER_SIZE];
 protected:
+  uint32_t bufferPosition;
   AdcReader();
   QueueHandle_t timer_queue;
   TaskHandle_t handle;
   uint32_t ulp_addr;
   static void task(void *arg);
-  static void IRAM_ATTR timerCallback(void *arg);
   static AdcReader* singleton;
 };
 

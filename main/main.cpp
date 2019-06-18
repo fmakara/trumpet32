@@ -29,6 +29,46 @@
 
 #include "mongoose/WebService.h"
 
+/* Pin setup (board 1.0)
+ * IO36_AD1.0  MIC_IN1 (vcc side)
+ * IO39_AD1.3  MIC_IN2 (gnd side)
+ *
+ * IO34_AD1.6  AN_IN1 (vcc side)
+ * IO35_AD1.7  AN_IN2
+ * IO32_AD1.4  AN_IN3
+ * IO33_AD1.5  AN_IN4 (gnd side)
+ *
+ * IO25  DAC1
+ * IO26  DAC2
+ *
+ * IO14  SD_CLK
+ * IO12  SD_D2
+ * IO13  SD_D3
+ * IO15  SD_CMD
+ * IO2   SD_D0
+ * IO4   SD_D1
+ * IO16  SD_SW (pullup interno)
+ *
+ * IO26  DIG1 (gnd side)
+ * IO9   DIG2
+ * IO10  DIG3
+ * IO11  DIG4
+ * IO6   DIG5
+ * IO7   DIG6 (vcc side)
+ *
+ * IO8   LCD_BTN_SH
+ * IO17  LCD_BL
+ * IO5   LCD_CE
+ * IO18  LCD_CLK
+ * IO19  LCD_DOUT (btn)
+ * IO21  LCD_RESET
+ * IO22  LCD_D/C
+ * IO23  LCD_DIN
+ *
+ * IO0   PROG/execute
+ * IO1  TXD0 (prog+midi)
+ * IO3  RXD0 (prog+midi)
+ */
 
 extern "C" {
 void app_main();
@@ -60,7 +100,8 @@ void app_main(){
   WifiHandler::get();
   WifiHandler::get()->updateAP();
   WifiHandler::get()->updateSTA();
-  //AdcReader::get();
+  AdcReader *adc = AdcReader::get();
+  printf("Running ADC\n");
 
   CM::get()->setCallback(CM::WIFI_AP_SSID,callback_updateAP);
   CM::get()->setCallback(CM::WIFI_STA_SSID,callback_updateSTA);
@@ -96,25 +137,33 @@ void app_main(){
   init_cgi(ws);
 
   ws->addSpiffs("/*", "/spiffs/*");
-  printf("Running WebService");
+  printf("Running WebService\n");
 
-  Player *p = Player::get();
-  p->startup_sine_waves();
+  //Player *p = Player::get();
+  //p->startup_sine_waves();
   printf("Running Player\n");
 
   int r = 0;
   ScreenElement menu(new Sprite(84,48),2);
   menu.addToList(lcd->root);
 
+  uint8_t lastRead = 0;
   while(1){
-    MainMenu::get()->run(&menu);
 
     vTaskDelay(1000);
+//    while( adc->bufferUsed == lastRead );
+
+    lastRead = adc->bufferUsed;
+    /*
+    MainMenu::get()->run(&menu);
+
     if(GLOBAL_PLEASE_RESTART < esp_timer_get_time()){
       CM::get()->saveToNVM();
       printf("Restarting now.\n");
       esp_restart();
-    }
+    }else{
+      printf("...\n");
+    }*/
   }
 }
 
